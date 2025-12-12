@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportTrack-Спортсмен</title>
+    <link rel = "stylesheet" href="fonts.css">
+    <link rel = "stylesheet" href="athlete.css">
+</head>
+<body>
+<header class = "top-header">
+    <div class = "logo">SPORTTRACK</div>
+    <div class = "lang">KZ | RU | ENG</div>
+</header>  
+<main class = "main">  
+    <section class = "athlete-layout">
+        <div class = "athlte-left">
+            <div class = "athlete-profile">
+                <div class = "athlete-avatar"></div>
+                <div class = "athlete-info">
+                    <p class = "label">Имя</p>
+                    <p class = "value" id="athleteName">Спортсмен</p>
+                    <p class = "label">Роль</p>
+                    <p class = "value">Спортсмен</p>
+                    <p class = "label">Вид спорта</p>
+                    <p class = "value" id = "sportType">-</p>
+                </div>
+
+            </div>
+            <div class = "block">
+                <h2 class = "block-title">Следующая тренировка</h2>
+                <div class = "block-line"></div>
+                <p class = "block-text" id="nextWorkoutText">загрузка...</p>
+                <p class = "block -error" id = "nextWorkoutError"></p>
+            </div>
+            <div class = "block">
+                <h2 class = "block-title">Нагрузка на неделю</h2>
+                <div class = "block-line"></div>
+                <p class = "block-text">
+                    Выполнено за 7 дней:
+                    <span id = "weeklyCompleted">0</span> тренировок
+                </p>
+            </div>
+            <div class = "block">
+                <h2 class = "block-title">Оповещения</h2>
+                <div class = "block-line"></div>
+                <p class = "block-text">Здесь будут важные сообщения от тренера</p>
+            </div>            
+
+        </div>
+
+        <div class = "athlete-right">
+            <div class = "menu-item">
+                <button class = "menu-btn" onclick ="goTo('training.html')">тренировки</button>
+                <div class = "menu-circle"></div>
+            </div>
+            <div class = "menu-item">
+                <button class = "menu-btn" onClick= "goTo('messages.html')">сообщения</button>
+                <div class = "menu-circle"></div>
+            </div>
+            <div class = "menu-item">
+                <button class = "menu-btn" onClick="goTo('progress.html')">прогресс недели</button>
+                <div class = "menu-circle"></div>
+            </div>
+
+            <div class = "menu-item">
+                <button class = "menu-btn" onClick="goTo('schedule.html')">расписание</button>
+                <div class = "menu-circle"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script scr = "main.js"></script>
+</body>
+</html>
