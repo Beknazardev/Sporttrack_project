@@ -2,9 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>SportTrack — Регистрация (Email)</title>
+    <title>SportTrack — Регистрация</title>
     <link rel="stylesheet" href="fonts.css">
-    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="auth.css">
 </head>
 <body>
 
@@ -14,24 +14,57 @@
 </header>
 
 <main class="main">
-    <section class="reg-box">
+    <section class="auth-box">
+
         <h1 class="title">Регистрация</h1>
-        <h2 class="subtitle">Введите адрес электронной почты</h2>
+        <h2 class="subtitle">Введите данные для создания аккаунта</h2>
 
-        <label class="input-label" for="email">Email</label>
-        <input id="email" type="email" class="input-field" placeholder="email">
+        <!-- ФОРМА РЕГИСТРАЦИИ -->
+        <form id="registerForm">
+            <label class="input-label" for="email">Email</label>
+            <input id="email" type="email" class="input-field" placeholder="email">
 
-        <a href="config_email.html" class="btn">Продолжить</a>
+            <label class="input-label" for="username">Имя</label>
+            <input id="username" type="text" class="input-field" placeholder="Имя">
 
-        <p class="small-text">
-            Уже есть аккаунт?
-            <a href="login.html" class="link">Войти</a>
-        </p>
+            <label class="input-label" for="password">Пароль</label>
+            <input id="password" type="password" class="input-field" placeholder="пароль" maxlength="72">
 
-        <p id="regEmailStatus" class="status"></p>
+            <label class="input-label" for="role">Роль</label>
+            <select id="role" class="input-field">
+                <option value="">Выберите роль</option>
+                <option value="athlete">Спортсмен</option>
+                <option value="coach">Тренер</option>
+                <option value="admin">Админ</option>
+            </select>
+
+            <button id="registerBtn" type="button" class="btn">Зарегистрироваться</button>
+
+            <p id="registerStatus" class="status"></p>
+
+            <p class="small-text">
+                Уже есть аккаунт?
+                <a href="login.html" class="link">Войти</a>
+            </p>
+        </form>
+
+        <!-- ФОРМА ПОДТВЕРЖДЕНИЯ КОДА -->
+        <form id="confirmForm" style="display: none; margin-top: 24px;">
+            <h2 class="subtitle">Подтверждение email</h2>
+
+            <p id="confirmInfo" class="small-text"></p>
+
+            <label class="input-label" for="code">Код</label>
+            <input id="code" type="text" class="input-field" placeholder="000000">
+
+            <button id="confirmBtn" type="button" class="btn">Подтвердить</button>
+
+            <p id="confirmStatus" class="status"></p>
+        </form>
+
     </section>
 </main>
 
+<script src="auth_register.js"></script>
 </body>
 </html>
- 
