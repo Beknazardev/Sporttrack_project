@@ -20,7 +20,7 @@
             <div class="avatar"></div>
             <p class="edit">редактирование</p>
 
-            <p class="info-label">name</p>
+            <p class="info-label" id="profileName">name</p>
             <p class="info-label">спортсмен</p>
             <p class="info-label">вид спорта</p>
         </div>
@@ -60,6 +60,24 @@
     </section>
 
 </main>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const raw = localStorage.getItem("user");
+    if (!raw) {
+        window.location.href = "login.html";
+        return;
+    }
 
+    const user = JSON.parse(raw);
+
+    if (user.role !== "athlete") {
+        window.location.href = "landing.html";
+        return;
+    }
+
+    const nameElem = document.getElementById("profileName");
+    if (nameElem) nameElem.textContent = user.username || "Без имени";
+});
+</script>
 </body>
 </html>
