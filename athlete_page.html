@@ -1,181 +1,254 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>SportTrack — Профиль спортсмена</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 30px; background-color: #f5f5f5; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .lang-select { padding: 6px 10px; }
-        h1 { margin-bottom: 20px; }
-        .profile-container {
-            display: flex;
-            gap: 24px;
-            align-items: flex-start;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            max-width: 650px;
-        }
-        .avatar-block {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        .avatar-block img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #ddd;
-            background: #eee;
-        }
-        .avatar-block input[type="file"] {
-            font-size: 14px;
-        }
-        .info-block p { margin: 6px 0; font-size: 15px; }
-        .label { font-weight: bold; }
-        .back-link {
-            display: inline-block; margin-top: 20px;
-            text-decoration: none; color: #0077ff; font-size: 14px;
-        }
-        .back-link:hover { text-decoration: underline; }
-    </style>
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SportTrack — Кабинет тренера</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
 
-<body>
+      <div class="top-bar__lang">
+        <select id="langSelect" class="lang-select">
+          <option value="ru" data-i18n="lang_ru">Русский</option>
+          <option value="en" data-i18n="lang_en">English</option>
+          <option value="kz" data-i18n="lang_kz">Қазақша</option>
+        </select>
+      </div>
+    </header>
 
-    <div class="top-bar">
-        <div><strong data-i18n="app_title">SportTrack</strong></div>
-        <div>
-            <select id="langSelect" class="lang-select">
-                <option value="ru" data-i18n="lang_ru">Русский</option>
-                <option value="en" data-i18n="lang_en">English</option>
-                <option value="kz" data-i18n="lang_kz">Қазақша</option>
-            </select>
-        </div>
-    </div>
+    <main class="coach-layout">
+      <!-- ЛЕВАЯ КАРТОЧКА ТРЕНЕРА -->
+      <section class="panel coach-card">
+        <div class="coach-card__top">
+          <div class="coach-avatar">
+            <span id="avatarLetter" class="coach-avatar__text"></span>
+          </div>
 
-    <h1 data-i18n="athlete_page_title">Профиль спортсмена</h1>
+          <div class="coach-card__info">
+            <h1 id="coachName" class="coach-name"></h1>
 
-    <div class="profile-container">
-        <div class="avatar-block">
-            <img id="avatarPreview" src="images/default-avatar.png" alt="Аватар">
-            <input type="file" id="avatarInput" accept="image/*">
+            <p class="coach-status">
+              <span data-i18n="coach_label_status">Статус:</span>
+              &nbsp;
+              <span data-i18n="coach_label_status_value">тренер</span>
+            </p>
+
+            <button
+              id="editProfileBtn"
+              class="btn-link"
+              data-i18n="coach_edit_profile"
+            >
+              Редактировать профиль
+            </button>
+          </div>
         </div>
 
-        <div class="info-block">
-            <p>
-                <span class="label" data-i18n="athlete_label_fullname">Имя и фамилия:</span>
-                <span id="athleteFullName">—</span>
-            </p>
-            <p>
-                <span class="label" data-i18n="athlete_label_status">Статус:</span>
-                <span id="athleteStatus" data-i18n="athlete_label_status_value">спортсмен</span>
-            </p>
-            <p>
-                <span class="label" data-i18n="athlete_label_sport">Вид спорта:</span>
-                <span id="athleteSport">—</span>
-            </p>
-            <p>
-                <span class="label" data-i18n="athlete_label_email">Email:</span>
-                <span id="athleteEmail">—</span>
-            </p>
+        <div class="coach-card__extra">
+          <div class="coach-info-row">
+            <span class="coach-label">ID:</span>
+            <span id="coachIdValue"></span>
+          </div>
+
+          <div class="coach-info-row">
+            <span class="coach-label" data-i18n="coach_label_email">
+              Email:
+            </span>
+            <span id="coachEmailValue"></span>
+          </div>
+
+          <div class="coach-info-row">
+            <span
+              class="coach-label"
+              id="coachSportLabel"
+              data-i18n="coach_label_sport"
+            >
+              Вид спорта:
+            </span>
+            <span id="coachSportValue"></span>
+          </div>
         </div>
-    </div>
+      </section>
+
+      <!-- ПРАВАЯ КОЛОНКА -->
+      <section class="coach-right">
+        <div class="coach-right-header">
+          <h2 class="coach-welcome">
+            <span data-i18n="dashboard_welcome">Добро пожаловать</span>,
+            <span id="coachFullName"></span>
+          </h2>
+
+          <button id="openChatFromCoach" class="btn-primary btn-chat-header">
+            💬 Чат
+          </button>
+        </div>
+
+        <!-- 4 КАРТОЧКИ -->
+        <section class="coach-menu">
+          <a href="coach_athletes.html" class="coach-menu__item">
+            <div class="coach-menu__icon">👟</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="dashboard_athletes_title"
+              >
+                Спортсмены
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="dashboard_athletes_sub"
+              >
+                Список и выбор спортсменов
+              </div>
+            </div>
+          </a>
+
+          <a href="coach_tasks.html" class="coach-menu__item">
+            <div class="coach-menu__icon">📝</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="dashboard_tasks_title"
+              >
+                Задачи
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="dashboard_tasks_sub"
+              >
+                Выдать задания выбранным
+              </div>
+            </div>
+          </a>
+
+          <a href="coach_plans.html" class="coach-menu__item">
+            <div class="coach-menu__icon">📅</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="dashboard_plans_title"
+              >
+                Планы тренировок
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="dashboard_plans_sub"
+              >
+                Структура по дням и уровням
+              </div>
+            </div>
+          </a>
+
+          <a href="coach_notifications.html" class="coach-menu__item">
+            <div class="coach-menu__icon">🔔</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="dashboard_notif_title"
+              >
+                Оповещения
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="dashboard_notif_sub"
+              >
+                Отчёты, запросы, статусы
+              </div>
+            </div>
+          </a>
+        </section>
+      </section>
+
+      <!-- СТАТИСТИКА ПОД ЛЕВОЙ КАРТОЧКОЙ -->
+      <section class="coach-summary">
+        <div class="coach-summary__item">
+          <span class="coach-summary__number" id="summaryAthletes">0</span>
+          <span
+            class="coach-summary__label"
+            data-i18n="dashboard_stats_athletes"
+          >
+            Спортсменов
+          </span>
+        </div>
+
+        <div class="coach-summary__item">
+          <span class="coach-summary__number" id="summaryPlans">0</span>
+          <span
+            class="coach-summary__label"
+            data-i18n="dashboard_stats_plans"
+          >
+            Планов
+          </span>
+        </div>
+
+        <div class="coach-summary__item">
+          <span class="coach-summary__number" id="summaryTasks">0</span>
+          <span
+            class="coach-summary__label"
+            data-i18n="dashboard_stats_active_tasks"
+          >
+            Активных задач
+          </span>
+        </div>
+      </section>
+    </main>
 
     <script src="lang.js"></script>
-
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const rawUser = localStorage.getItem("user");
-            if (!rawUser) {
-                alert("Пользователь не найден. Пройдите регистрацию.");
-                window.location.href = "registration.html";
-                return;
-            }
+      const rawUser = localStorage.getItem("user");
 
-            const user = JSON.parse(rawUser);
+      if (rawUser) {
+        try {
+          const user = JSON.parse(rawUser);
 
-            const fullNameEl = document.getElementById("athleteFullName");
-            const emailEl = document.getElementById("athleteEmail");
-            const sportEl = document.getElementById("athleteSport");
-            const avatarPreview = document.getElementById("avatarPreview");
+          const name = user.username || "";
+          const fullName =
+            (user.last_name
+              ? `${user.username} ${user.last_name}`
+              : user.full_name) ||
+            user.username ||
+            "";
 
-            const firstName = user.username || "";
-            const lastName = user.last_name || "";
-            const fullName = (firstName + " " + lastName).trim();
+          if (name) {
+            document.getElementById("coachName").textContent = name;
+          }
+          if (fullName) {
+            document.getElementById("coachFullName").textContent = fullName;
+          }
 
-            if (fullNameEl) fullNameEl.textContent = fullName || "—";
-            if (emailEl) emailEl.textContent = user.email || "—";
-            if (sportEl) sportEl.textContent = user.sport || "—";
+          if (user.id !== undefined && user.id !== null) {
+            document.getElementById("coachIdValue").textContent = user.id;
+          }
+          if (user.email) {
+            document.getElementById("coachEmailValue").textContent = user.email;
+          }
+          if (user.sport) {
+            document.getElementById("coachSportValue").textContent = user.sport;
+          }
 
-            if (user.avatar_url && avatarPreview) {
-                avatarPreview.src = "http://localhost:8000" + user.avatar_url;
-            } else {
-                const savedAvatar = localStorage.getItem("avatar_athlete");
-                if (savedAvatar && avatarPreview) {
-                    avatarPreview.src = savedAvatar;
-                }
-            }
+          const first = (user.username || fullName || "").trim()[0];
+          if (first) {
+            document.getElementById("avatarLetter").textContent =
+              first.toUpperCase();
+          }
+        } catch (e) {
+          console.error("Ошибка парсинга user из localStorage", e);
+        }
+      }
+
+      document
+        .getElementById("editProfileBtn")
+        .addEventListener("click", () => {
+          window.location.href = "coach_profile_edit.html";
         });
 
-        const avatarInput = document.getElementById("avatarInput");
-        const avatarPreview = document.getElementById("avatarPreview");
-
-        if (avatarInput) {
-            avatarInput.addEventListener("change", () => {
-                const file = avatarInput.files[0];
-                if (!file) return;
-
-                const rawUser = localStorage.getItem("user");
-                if (!rawUser) {
-                    alert("Пользователь не найден");
-                    return;
-                }
-                const user = JSON.parse(rawUser);
-
-                
-                const haveBackend = false; 
-
-                if (!haveBackend) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        const dataUrl = reader.result;
-                        avatarPreview.src = dataUrl;
-                        localStorage.setItem("avatar_athlete", dataUrl);
-                    };
-                    reader.readAsDataURL(file);
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append("file", file);
-
-                fetch(`http://localhost:8000/api/users/${user.id}/avatar`, {
-                    method: "POST",
-                    body: formData,
-                })
-                  .then(res => {
-                      if (!res.ok) throw new Error("Ошибка загрузки аватара");
-                      return res.json();
-                  })
-                  .then(data => {
-                      const fullUrl = "http://localhost:8000" + data.avatar_url;
-                      avatarPreview.src = fullUrl;
-
-                      user.avatar_url = data.avatar_url;
-                      localStorage.setItem("user", JSON.stringify(user));
-                  })
-                  .catch(err => {
-                      console.error(err);
-                      alert("Не удалось загрузить аватар. Попробуйте ещё раз.");
-                  });
-            });
-        }
+      const chatBtn = document.getElementById("openChatFromCoach");
+      if (chatBtn) {
+        chatBtn.addEventListener("click", () => {
+          window.location.href = "chat.html";
+        });
+      }
     </script>
-
-</body>
+  </body>
 </html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SportTrack — Чат</title>
+    <link rel="stylesheet" href="styles.css" />
+
+    <style>
+      .chat-page {
+        max-width: 1000px;
+        margin: 32px auto 40px;
+        padding: 0 24px;
+        height: calc(100vh - 120px);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 16px;
+      }
+
+      .chat-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+
+      .chat-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .chat-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 4px;
+      }
+
+      .chat-peer {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .chat-window {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 24px;
+        padding: 16px 20px;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+        overflow-y: auto;
+      }
+
+      .chat-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .chat-msg {
+        max-width: 70%;
+        padding: 8px 12px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .chat-msg.me {
+        margin-left: auto;
+        background: #e0f2ff;
+        text-align: right;
+      }
+
+      .chat-msg.other {
+        background: #f3f3f3;
+      }
+
+      .chat-msg-time {
+        margin-top: 4px;
+        font-size: 11px;
+        opacity: 0.6;
+      }
+
+      .chat-input-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .chat-input-row .input {
+        flex: 1;
+      }
+
+      .chat-empty {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #777;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+
+      <div class="top-bar__lang">
+        <select id="langSelect" class="lang-select">
+          <option value="ru" data-i18n="lang_ru">Русский</option>
+          <option value="en" data-i18n="lang_en">English</option>
+          <option value="kz" data-i18n="lang_kz">Қазақша</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="chat-page">
+      <section class="chat-header">
+        <div>
+          <h1 class="chat-title">Чат</h1>
+          <p class="chat-subtitle">
+            Общение между тренером и спортсменом
+          </p>
+        </div>
+        <div class="chat-peer" id="chatPeerInfo"></div>
+      </section>
+
+      <section class="chat-window">
+        <div id="chatMessages" class="chat-messages"></div>
+        <div id="chatEmpty" class="chat-empty" style="display: none;">
+          Сообщений пока нет. Напишите первое 😊
+        </div>
+      </section>
+
+      <section class="chat-input-row">
+        <input
+          id="chatInput"
+          class="input"
+          type="text"
+          placeholder="Написать сообщение..."
+        />
+        <button id="chatSendBtn" class="btn-primary">
+          Отправить
+        </button>
+      </section>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+      const rawUser = localStorage.getItem("user");
+      let currentUser = null;
+
+      try {
+        if (rawUser) currentUser = JSON.parse(rawUser);
+      } catch (e) {
+        console.error("Ошибка парсинга user", e);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const peerId = Number(params.get("peer_id"));
+      const chatMessagesEl = document.getElementById("chatMessages");
+      const chatEmptyEl = document.getElementById("chatEmpty");
+      const peerInfoEl = document.getElementById("chatPeerInfo");
+
+      if (!currentUser || !peerId) {
+        chatMessagesEl.innerHTML =
+          "<p>Нет данных о пользователе или собеседнике.</p>";
+      } else {
+        peerInfoEl.textContent = `Собеседник: ID ${peerId}`;
+        loadHistory();
+      }
+
+      async function loadHistory() {
+        try {
+          const res = await fetch(
+            `/api/chat/history?user_id=${currentUser.id}&peer_id=${peerId}`
+          );
+          if (!res.ok) throw new Error("Ошибка загрузки истории");
+
+          const msgs = await res.json();
+          chatMessagesEl.innerHTML = "";
+
+          if (!msgs.length) {
+            chatEmptyEl.style.display = "block";
+          } else {
+            chatEmptyEl.style.display = "none";
+          }
+
+          msgs.forEach((m) => {
+            addMessage(m.message, m.sender_id === currentUser.id, m.created_at);
+          });
+
+          chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function addMessage(text, isMe, createdAt) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "chat-msg " + (isMe ? "me" : "other");
+
+        const timeStr = createdAt
+          ? new Date(createdAt).toLocaleTimeString()
+          : "";
+
+        wrapper.innerHTML = `
+          <div>${text}</div>
+          <div class="chat-msg-time">${timeStr}</div>
+        `;
+
+        chatMessagesEl.appendChild(wrapper);
+      }
+
+      async function sendMsg() {
+        const input = document.getElementById("chatInput");
+        const text = input.value.trim();
+        if (!text || !currentUser || !peerId) return;
+
+        try {
+          const res = await fetch("/api/chat/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sender_id: currentUser.id,
+              receiver_id: peerId,
+              message: text,
+            }),
+          });
+
+          if (!res.ok) throw new Error("Ошибка отправки сообщения");
+
+          const saved = await res.json();
+
+          addMessage(text, true, saved.created_at);
+          input.value = "";
+          chatEmptyEl.style.display = "none";
+          chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      document
+        .getElementById("chatSendBtn")
+        .addEventListener("click", sendMsg);
+
+      document
+        .getElementById("chatInput")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") sendMsg();
+        });
+
+      setInterval(() => {
+        if (currentUser && peerId) loadHistory();
+      }, 5000);
+    </script>
+  </body>
+</html>

@@ -1,3 +1,5 @@
+// lang.js
+
 const translations = {
   ru: {
     app_title: "SportTrack",
@@ -38,6 +40,50 @@ const translations = {
     coach_label_status_value: "тренер",
     coach_label_sport: "Вид спорта:",
     coach_label_email: "Email:",
+
+    // общая кнопка редактирования
+    coach_edit_profile: "Редактировать профиль",
+
+    // Дэшборд тренера
+    dashboard_welcome: "Добро пожаловать",
+    dashboard_athletes_title: "Спортсмены",
+    dashboard_athletes_sub: "Список и выбор спортсменов",
+    dashboard_tasks_title: "Задачи",
+    dashboard_tasks_sub: "Выдать задания выбранным",
+    dashboard_plans_title: "Планы тренировок",
+    dashboard_plans_sub: "Структура по дням и уровням",
+    dashboard_notif_title: "Оповещения",
+    dashboard_notif_sub: "Отчёты, запросы, статусы",
+    dashboard_stats_athletes: "Спортсменов",
+    dashboard_stats_plans: "Планов",
+    dashboard_stats_active_tasks: "Активных задач",
+
+    // Дэшборд спортсмена — правые карточки
+    athlete_dashboard_progress_title: "Прогресс",
+    athlete_dashboard_progress_sub: "Ваши результаты и статистика",
+    athlete_dashboard_workouts_title: "Мои тренировки",
+    athlete_dashboard_workouts_sub: "Запланированные и выполненные тренировки",
+    athlete_dashboard_notifications_title: "Уведомления",
+    athlete_dashboard_notifications_sub: "Сообщения, отчёты, статусы",
+    athlete_dashboard_coach_title: "Тренер",
+    athlete_dashboard_coach_sub: "Информация о вашем тренере",
+        athletes_search_placeholder: "Поиск по ID, email или имени",
+    athletes_search_button: "Найти",
+    athletes_search_hint:
+      "Введите ID (число), email или имя спортсмена и нажмите «Найти».",
+
+    athletes_table_id: "ID",
+    athletes_table_name: "Имя",
+    athletes_table_email: "Email",
+    athletes_table_sport: "Вид спорта",
+    athletes_table_status: "Статус",
+    athletes_table_chat: "Чат",
+    athletes_table_request: "Запрос",
+
+    athletes_empty: "Ничего не найдено",
+    athletes_request_sent: "Запрос отправлен",
+    athletes_request_error: "Не удалось отправить запрос",
+
   },
 
   en: {
@@ -79,6 +125,47 @@ const translations = {
     coach_label_status_value: "coach",
     coach_label_sport: "Sport:",
     coach_label_email: "Email:",
+
+    coach_edit_profile: "Edit profile",
+
+    dashboard_welcome: "Welcome",
+    dashboard_athletes_title: "Athletes",
+    dashboard_athletes_sub: "List and selection of athletes",
+    dashboard_tasks_title: "Tasks",
+    dashboard_tasks_sub: "Assign tasks to selected athletes",
+    dashboard_plans_title: "Training plans",
+    dashboard_plans_sub: "Structure by days and levels",
+    dashboard_notif_title: "Notifications",
+    dashboard_notif_sub: "Reports, requests, statuses",
+    dashboard_stats_athletes: "Athletes",
+    dashboard_stats_plans: "Plans",
+    dashboard_stats_active_tasks: "Active tasks",
+
+    athlete_dashboard_progress_title: "Progress",
+    athlete_dashboard_progress_sub: "Your results and statistics",
+    athlete_dashboard_workouts_title: "My workouts",
+    athlete_dashboard_workouts_sub: "Scheduled and completed workouts",
+    athlete_dashboard_notifications_title: "Notifications",
+    athlete_dashboard_notifications_sub: "Messages, reports, statuses",
+    athlete_dashboard_coach_title: "Coach",
+    athlete_dashboard_coach_sub: "Information about your coach",
+        athletes_search_placeholder: "Search by ID, email or name",
+    athletes_search_button: "Search",
+    athletes_search_hint:
+      "Enter athlete ID (number), email or name and click “Search”.",
+
+    athletes_table_id: "ID",
+    athletes_table_name: "Name",
+    athletes_table_email: "Email",
+    athletes_table_sport: "Sport",
+    athletes_table_status: "Status",
+    athletes_table_chat: "Chat",
+    athletes_table_request: "Request",
+
+    athletes_empty: "Nothing found",
+    athletes_request_sent: "Request sent",
+    athletes_request_error: "Failed to send request",
+
   },
 
   kz: {
@@ -120,6 +207,47 @@ const translations = {
     coach_label_status_value: "жаттықтырушы",
     coach_label_sport: "Спорт түрі:",
     coach_label_email: "Email:",
+
+    coach_edit_profile: "Профильді өңдеу",
+
+    dashboard_welcome: "Қош келдіңіз",
+    dashboard_athletes_title: "Спортшылар",
+    dashboard_athletes_sub: "Спортшылар тізімі және таңдау",
+    dashboard_tasks_title: "Тапсырмалар",
+    dashboard_tasks_sub: "Таңдалған спортшыларға тапсырма беру",
+    dashboard_plans_title: "Жаттығу жоспарлары",
+    dashboard_plans_sub: "Күндер мен деңгейлер бойынша құрылым",
+    dashboard_notif_title: "Хабарламалар",
+    dashboard_notif_sub: "Есептер, сұраулар, статустар",
+    dashboard_stats_athletes: "Спортшылар",
+    dashboard_stats_plans: "Жоспарлар",
+    dashboard_stats_active_tasks: "Белсенді тапсырмалар",
+
+    athlete_dashboard_progress_title: "Прогресс",
+    athlete_dashboard_progress_sub: "Нәтижелеріңіз бен статистикаңыз",
+    athlete_dashboard_workouts_title: "Менің жаттығуларым",
+    athlete_dashboard_workouts_sub: "Жоспарланған және орындалған жаттығулар",
+    athlete_dashboard_notifications_title: "Хабарламалар",
+    athlete_dashboard_notifications_sub: "Хабарлар, есептер, статустар",
+    athlete_dashboard_coach_title: "Жаттықтырушы",
+    athlete_dashboard_coach_sub: "Сіздің жаттықтырушыңыз туралы ақпарат",
+        athletes_search_placeholder: "ID, email немесе аты бойынша іздеу",
+    athletes_search_button: "Іздеу",
+    athletes_search_hint:
+      "ID (сан), email немесе спортшының атын енгізіп, «Іздеу» батырмасын басыңыз.",
+
+    athletes_table_id: "ID",
+    athletes_table_name: "Аты",
+    athletes_table_email: "Email",
+    athletes_table_sport: "Спорт түрі",
+    athletes_table_status: "Мәртебе",
+    athletes_table_chat: "Чат",
+    athletes_table_request: "Сұрау",
+
+    athletes_empty: "Ештеңе табылмады",
+    athletes_request_sent: "Сұрау жіберілді",
+    athletes_request_error: "Сұрауды жіберу мүмкін болмады",
+
   },
 };
 

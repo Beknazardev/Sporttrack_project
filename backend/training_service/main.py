@@ -1,37 +1,37 @@
 import os
 import uuid
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel
-import psycopg
-import uuid
-import os
+from typing import Optional
 
-from backend.auth_service.main import DB_NAME
+import psycopg2
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
 
 app = FastAPI(title="SportTrack Training Service")
 
+# ===== DB CONFIG =====
+DB_NAME = os.getenv("DB_NAME", "sporttrack")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "Postgres123")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", "5432"))
 
-DB_NAME="sporttrack"
-DB_USER="postgres"
-DB_PASSWORD = "Postgres123"
-DB_HOST = "localhost"
-DB_PORT = 5432
+MEDIA_DIR = os.getenv("MEDIA_DIR", "media")
+os.makedirs(MEDIA_DIR, exist_ok=True)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-MEDIA_DIR = "media"
-if not os.path.exists(MEDIA_DIR):
-    os.makedirs(MEDIA_DIR)
-
-
-def get_connection():
+def get_conn():
     try:
-        print("DB_NAME:", repr(DB_NAME))
-        print("DB_USER:", repr(DB_USER))
-        print("DB_PASSWORD:", repr(DB_PASSWORD))
-        print("DB_HOST:", repr(DB_HOST))
-        print("DB_PORT:", repr(DB_PORT))
-
-        conn = psycopg.connect(
+        conn = psycopg2.connect(
             dbname=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD,
@@ -41,89 +41,139 @@ def get_connection():
         conn.autocommit = True
         return conn
     except Exception as e:
-        print("DB CONNECT ERROR (RAW):", repr(e))
         raise HTTPException(status_code=500, detail=f"DB CONNECT ERROR: {e}")
 
 
-
-
-
-class PlanCreate(BaseModel):
+# ===== SCHEMAS =====
+class CoachSendRequest(BaseModel):
     coach_id: int
-    title: str
-    description: str | None = None
-    level: str | None = None
-
-
-class WorkoutCreate(BaseModel):
-    plan_id: int
-    day_number: int | None = None
-    name: str
-    notes: str | None = None
-
-
-class WorkoutResultCreate(BaseModel):
     athlete_id: int
-    workout_id: int
-    is_completed: bool = True
-    comment: str | None = None
+
+
+class RequestAnswer(BaseModel):
+    link_id: int
+    action: str  # accept | reject
 
 
 class TaskCreate(BaseModel):
     coach_id: int
     athlete_id: int
     title: str
-    description: str | None = None
+    description: Optional[str] = None
 
 
+class ChatMessageCreate(BaseModel):
+    sender_id: int
+    receiver_id: int
+    message: str
+
+
+# ===== HEALTH =====
 @app.get("/api/ping")
 def ping():
     return {"status": "training-service ok"}
 
 
-@app.post("/api/plans")
-def create_plan(data: PlanCreate):
-    conn = get_connection()
+# ===== COACH <-> ATHLETE LINKS =====
+@app.get("/api/coach/athletes")
+def coach_athletes(coach_id: int):
+    conn = get_conn()
     cur = conn.cursor()
     try:
         cur.execute(
-            """INSERT INTO training_plans (coach_id, title, description, level)
-               VALUES (%s, %s, %s, %s) RETURNING id""",
-            (data.coach_id, data.title, data.description, data.level)
+            """
+            SELECT u.id, u.username, u.email, u.sport, ta.status
+            FROM trainer_athletes ta
+            JOIN users u ON u.id = ta.athlete_id
+            WHERE ta.coach_id = %s
+            ORDER BY u.username
+            """,
+            (coach_id,),
         )
-        plan_id = cur.fetchone()[0]
-        return {"plan_id": plan_id}
+        rows = cur.fetchall()
+        return [
+            {
+                "id": r[0],
+                "username": r[1],
+                "email": r[2],
+                "sport": r[3],
+                "link_status": r[4],
+            }
+            for r in rows
+        ]
     finally:
         cur.close()
         conn.close()
 
 
-@app.get("/api/plans")
-def list_plans(coach_id: int | None = None):
-    conn = get_connection()
+@app.post("/api/coach/send-request")
+def coach_send_request(data: CoachSendRequest):
+    conn = get_conn()
     cur = conn.cursor()
     try:
-        if coach_id:
-            cur.execute(
-                """SELECT id, coach_id, title, description, level, created_at
-                   FROM training_plans WHERE coach_id = %s
-                   ORDER BY created_at DESC""",
-                (coach_id,)
-            )
-        else:
-            cur.execute(
-                """SELECT id, coach_id, title, description, level, created_at
-                   FROM training_plans ORDER BY created_at DESC"""
-            )
+        # роли проверяем в users таблице (общая БД)
+        cur.execute("SELECT role FROM users WHERE id=%s", (data.coach_id,))
+        row = cur.fetchone()
+        if not row or row[0] != "coach":
+            raise HTTPException(400, "Тренер не найден")
+
+        cur.execute("SELECT role FROM users WHERE id=%s", (data.athlete_id,))
+        row = cur.fetchone()
+        if not row or row[0] != "athlete":
+            raise HTTPException(400, "Спортсмен не найден")
+
+        # если уже есть связь
+        cur.execute(
+            "SELECT status FROM trainer_athletes WHERE coach_id=%s AND athlete_id=%s",
+            (data.coach_id, data.athlete_id),
+        )
+        existing = cur.fetchone()
+        if existing:
+            status = existing[0]
+            if status == "accepted":
+                raise HTTPException(400, "Спортсмен уже привязан")
+            if str(status).startswith("pending"):
+                raise HTTPException(400, "Запрос уже существует")
+
+        # создаём/обновляем pending
+        cur.execute(
+            """
+            INSERT INTO trainer_athletes (coach_id, athlete_id, status)
+            VALUES (%s, %s, 'pending_from_coach')
+            ON CONFLICT (coach_id, athlete_id)
+            DO UPDATE SET status = EXCLUDED.status
+            """,
+            (data.coach_id, data.athlete_id),
+        )
+        return {"message": "Запрос отправлен"}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/athlete/requests")
+def athlete_requests(athlete_id: int):
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT ta.id, u.id, u.username, u.email, ta.status
+            FROM trainer_athletes ta
+            JOIN users u ON u.id = ta.coach_id
+            WHERE ta.athlete_id = %s AND ta.status = 'pending_from_coach'
+            ORDER BY ta.created_at DESC
+            """,
+            (athlete_id,),
+        )
         rows = cur.fetchall()
         return [
             {
-                "id": r[0],
+                "link_id": r[0],
                 "coach_id": r[1],
-                "title": r[2],
-                "description": r[3],
-                "level": r[4],
-                "created_at": r[5]
+                "username": r[2],
+                "email": r[3],
+                "status": r[4],
             }
             for r in rows
         ]
@@ -132,108 +182,43 @@ def list_plans(coach_id: int | None = None):
         conn.close()
 
 
-@app.post("/api/workouts")
-def create_workout(data: WorkoutCreate):
-    conn = get_connection()
+@app.post("/api/athlete/answer-request")
+def athlete_answer_request(data: RequestAnswer):
+    conn = get_conn()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT id FROM training_plans WHERE id = %s", (data.plan_id,))
-        if not cur.fetchone():
-            raise HTTPException(400, "План не найден")
+        cur.execute("SELECT status FROM trainer_athletes WHERE id=%s", (data.link_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Связь не найдена")
 
+        if data.action not in ("accept", "reject"):
+            raise HTTPException(400, "action должен быть accept/reject")
+
+        new_status = "accepted" if data.action == "accept" else "rejected"
         cur.execute(
-            """INSERT INTO workouts (plan_id, day_number, name, notes)
-               VALUES (%s, %s, %s, %s) RETURNING id""",
-            (data.plan_id, data.day_number, data.name, data.notes)
+            "UPDATE trainer_athletes SET status=%s WHERE id=%s",
+            (new_status, data.link_id),
         )
-        workout_id = cur.fetchone()[0]
-        return {"workout_id": workout_id}
+        return {"message": f"ok: {new_status}"}
     finally:
         cur.close()
         conn.close()
 
 
-@app.get("/api/workouts")
-def list_workouts(plan_id: int):
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            """SELECT id, plan_id, day_number, name, notes
-               FROM workouts WHERE plan_id = %s
-               ORDER BY day_number NULLS LAST, id""",
-            (plan_id,)
-        )
-        rows = cur.fetchall()
-        return [
-            {
-                "id": r[0],
-                "plan_id": r[1],
-                "day_number": r[2],
-                "name": r[3],
-                "notes": r[4]
-            }
-            for r in rows
-        ]
-    finally:
-        cur.close()
-        conn.close()
-
-
-@app.post("/api/workouts/result")
-def add_workout_result(data: WorkoutResultCreate):
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT id FROM workouts WHERE id = %s", (data.workout_id,))
-        if not cur.fetchone():
-            raise HTTPException(400, "Тренировка не найдена")
-
-        cur.execute(
-            """INSERT INTO workout_results
-               (athlete_id, workout_id, is_completed, comment, completed_at)
-               VALUES (%s, %s, %s, %s, NOW())
-               RETURNING id""",
-            (data.athlete_id, data.workout_id, data.is_completed, data.comment)
-        )
-        result_id = cur.fetchone()[0]
-        return {"result_id": result_id}
-    finally:
-        cur.close()
-        conn.close()
-
-
-@app.get("/api/athlete/{athlete_id}/progress")
-def athlete_progress(athlete_id: int):
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            """SELECT
-                   COUNT(*) FILTER (WHERE wr.is_completed = TRUE) AS done,
-                   COUNT(w.id) AS total
-               FROM workouts w
-               LEFT JOIN workout_results wr
-               ON wr.workout_id = w.id AND wr.athlete_id = %s""",
-            (athlete_id,)
-        )
-        done, total = cur.fetchone()
-        percent = (done / total * 100) if total > 0 else 0
-        return {"done": done, "total": total, "percent": round(percent, 1)}
-    finally:
-        cur.close()
-        conn.close()
-
-
+# ===== TASKS =====
 @app.post("/api/tasks")
 def create_task(data: TaskCreate):
-    conn = get_connection()
+    conn = get_conn()
     cur = conn.cursor()
     try:
         cur.execute(
-            """INSERT INTO tasks (coach_id, athlete_id, title, description)
-               VALUES (%s, %s, %s, %s) RETURNING id""",
-            (data.coach_id, data.athlete_id, data.title, data.description)
+            """
+            INSERT INTO tasks (coach_id, athlete_id, title, description)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
+            """,
+            (data.coach_id, data.athlete_id, data.title, data.description),
         )
         task_id = cur.fetchone()[0]
         return {"task_id": task_id}
@@ -244,14 +229,17 @@ def create_task(data: TaskCreate):
 
 @app.get("/api/tasks/athlete")
 def list_tasks_athlete(athlete_id: int):
-    conn = get_connection()
+    conn = get_conn()
     cur = conn.cursor()
     try:
         cur.execute(
-            """SELECT id, coach_id, title, description, created_at
-               FROM tasks WHERE athlete_id = %s
-               ORDER BY created_at DESC""",
-            (athlete_id,)
+            """
+            SELECT id, coach_id, title, description, created_at
+            FROM tasks
+            WHERE athlete_id = %s
+            ORDER BY created_at DESC
+            """,
+            (athlete_id,),
         )
         rows = cur.fetchall()
         return [
@@ -260,7 +248,7 @@ def list_tasks_athlete(athlete_id: int):
                 "coach_id": r[1],
                 "title": r[2],
                 "description": r[3],
-                "created_at": r[4]
+                "created_at": r[4],
             }
             for r in rows
         ]
@@ -271,20 +259,23 @@ def list_tasks_athlete(athlete_id: int):
 
 @app.post("/api/tasks/media")
 def upload_media(task_id: int = Form(...), file: UploadFile = File(...)):
-    ext = file.filename.split(".")[-1]
+    ext = (file.filename or "file").split(".")[-1]
     new_name = f"{uuid.uuid4()}.{ext}"
-    path = f"{MEDIA_DIR}/{new_name}"
+    path = os.path.join(MEDIA_DIR, new_name)
 
     with open(path, "wb") as f:
         f.write(file.file.read())
 
-    conn = get_connection()
+    conn = get_conn()
     cur = conn.cursor()
     try:
         cur.execute(
-            """INSERT INTO task_media (task_id, file_path)
-               VALUES (%s, %s) RETURNING id""",
-            (task_id, path)
+            """
+            INSERT INTO task_media (task_id, file_path)
+            VALUES (%s, %s)
+            RETURNING id
+            """,
+            (task_id, path),
         )
         media_id = cur.fetchone()[0]
         return {"media_id": media_id, "file_path": path}
@@ -295,15 +286,66 @@ def upload_media(task_id: int = Form(...), file: UploadFile = File(...)):
 
 @app.get("/api/tasks/media")
 def get_task_media(task_id: int):
-    conn = get_connection()
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT id, file_path FROM task_media WHERE task_id=%s", (task_id,))
+        rows = cur.fetchall()
+        return [{"id": r[0], "file_path": r[1]} for r in rows]
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ===== CHAT =====
+@app.post("/api/chat/send")
+def chat_send(data: ChatMessageCreate):
+    if not data.message.strip():
+        raise HTTPException(400, "Пустое сообщение")
+
+    conn = get_conn()
     cur = conn.cursor()
     try:
         cur.execute(
-            "SELECT id, file_path FROM task_media WHERE task_id = %s",
-            (task_id,)
+            """
+            INSERT INTO chat_messages (sender_id, receiver_id, message)
+            VALUES (%s, %s, %s)
+            RETURNING id, created_at
+            """,
+            (data.sender_id, data.receiver_id, data.message),
+        )
+        row = cur.fetchone()
+        return {"id": row[0], "created_at": row[1]}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/chat/history")
+def chat_history(user_id: int, peer_id: int, limit: int = 50):
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT sender_id, receiver_id, message, created_at
+            FROM chat_messages
+            WHERE (sender_id=%s AND receiver_id=%s) OR (sender_id=%s AND receiver_id=%s)
+            ORDER BY created_at ASC
+            LIMIT %s
+            """,
+            (user_id, peer_id, peer_id, user_id, limit),
         )
         rows = cur.fetchall()
-        return [{"id": r[0], "file_path": r[1]} for r in rows]
+        return [
+            {
+                "sender_id": r[0],
+                "receiver_id": r[1],
+                "message": r[2],
+                "created_at": r[3],
+            }
+            for r in rows
+        ]
     finally:
         cur.close()
         conn.close()

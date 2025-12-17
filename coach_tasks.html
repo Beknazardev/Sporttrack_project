@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SportTrack — Кабинет тренера</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="coach-body">
+
+<header class="top-bar">
+    <div class="top-bar__logo">SportTrack</div>
+
+    <div class="top-bar__user">
+        <span class="top-bar__role-badge">Тренер</span>
+        <span id="coachNameTop" class="top-bar__name">Имя тренера</span>
+    </div>
+</header>
+
+<main class="coach-layout">
+    <!-- ЛЕВАЯ КАРТОЧКА ТРЕНЕРА -->
+    <section class="panel coach-card">
+        <div class="coach-card__top">
+            <div class="coach-avatar">
+                <span id="avatarLetter" class="coach-avatar__text">T</span>
+            </div>
+
+            <div class="coach-card__info">
+                <h1 id="coachName" class="coach-name">Имя тренера</h1>
+                <p id="coachStatus" class="coach-status">Статус: активен</p>
+
+                <button id="editProfileBtn" class="btn-link">
+                    Редактировать профиль
+                </button>
+            </div>
+        </div>
+
+        <div class="coach-card__extra">
+            <div class="coach-info-row">
+                <span class="coach-label">ID:</span>
+                <span id="coachIdValue">—</span>
+            </div>
+            <div class="coach-info-row">
+                <span class="coach-label">Email:</span>
+                <span id="coachEmailValue">—</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ПРАВО: КНОПКИ 2×2 -->
+    <section class="coach-menu">
+        <a href="coach_athletes.html" class="coach-menu__item">
+            <div class="coach-menu__icon">👟</div>
+            <div class="coach-menu__text">
+                <div class="coach-menu__title">Спортсмены</div>
+                <div class="coach-menu__sub">Список и выбор спортсменов</div>
+            </div>
+        </a>
+
+        <a href="coach_tasks.html" class="coach-menu__item">
+            <div class="coach-menu__icon">📝</div>
+            <div class="coach-menu__text">
+                <div class="coach-menu__title">Задачи</div>
+                <div class="coach-menu__sub">Выдать задания выбранным</div>
+            </div>
+        </a>
+
+        <a href="coach_plans.html" class="coach-menu__item">
+            <div class="coach-menu__icon">📅</div>
+            <div class="coach-menu__text">
+                <div class="coach-menu__title">Планы тренировок</div>
+                <div class="coach-menu__sub">Структура по дням и уровням</div>
+            </div>
+        </a>
+
+        <a href="coach_notifications.html" class="coach-menu__item">
+            <div class="coach-menu__icon">🔔</div>
+            <div class="coach-menu__text">
+                <div class="coach-menu__title">Оповещения</div>
+                <div class="coach-menu__sub">Отчёты, запросы, статусы</div>
+            </div>
+        </a>
+    </section>
+</main>
+
+<script>
+    // Берём данные после логина, если ты их туда кладёшь
+    const rawUser = localStorage.getItem("user");
+
+    if (rawUser) {
+        try {
+            const user = JSON.parse(rawUser);
+
+            document.getElementById("coachNameTop").textContent =
+                user.username || "Тренер";
+
+            document.getElementById("coachName").textContent =
+                user.username || "Тренер";
+
+            document.getElementById("coachStatus").textContent =
+                user.is_active === false ? "Статус: неактивен" : "Статус: активен";
+
+            document.getElementById("coachIdValue").textContent =
+                user.id ?? "—";
+
+            document.getElementById("coachEmailValue").textContent =
+                user.email ?? "—";
+
+            const first = (user.username || "").trim()[0];
+            if (first) {
+                document.getElementById("avatarLetter").textContent = first.toUpperCase();
+            }
+        } catch (e) {
+            console.error("Ошибка парсинга user из localStorage", e);
+        }
+    }
+
+    // Переход на страницу редактирования профиля (создашь сам)
+    document.getElementById("editProfileBtn").addEventListener("click", () => {
+        window.location.href = "coach_profile_edit.html";
+    });
+</script>
+
+</body>
+</html>

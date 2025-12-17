@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SportTrack — Спортсмены тренера</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+
+      <div class="top-bar__lang">
+        <select id="langSelect" class="lang-select">
+          <option value="ru" data-i18n="lang_ru">Русский</option>
+          <option value="en" data-i18n="lang_en">English</option>
+          <option value="kz" data-i18n="lang_kz">Қазақша</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="page-inner">
+      <section class="page-header-block">
+        <h1 class="page-title" data-i18n="dashboard_athletes_title">Спортсмены</h1>
+        <p class="page-subtitle" data-i18n="dashboard_athletes_sub">Список и выбор спортсменов</p>
+      </section>
+
+      <section class="panel panel--wide">
+        <div class="panel-header">
+          <div class="panel-search-row">
+            <input
+              id="athleteSearch"
+              class="input input--search"
+              type="text"
+              placeholder="Поиск по ID, email или имени"
+            />
+            <button id="athleteSearchBtn" class="btn-primary btn-search">Найти</button>
+          </div>
+
+          <p class="search-hint">
+            Введите ID (число), email или имя спортсмена и нажмите «Найти».
+          </p>
+        </div>
+
+        <div class="panel-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Email</th>
+                <th>Вид спорта</th>
+                <th>Статус</th>
+                <th>Чат</th>
+                <th>Запрос</th>
+              </tr>
+            </thead>
+            <tbody id="athletesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const USERS_API = "http://127.0.0.1:7003";
+      const TRAINING_API = "http://127.0.0.1:7001";
+
+      const rawUser = localStorage.getItem("user");
+      let coachId = null;
+      if (rawUser) {
+        try {
+          coachId = JSON.parse(rawUser).id ?? null;
+        } catch {}
+      }
+
+      function renderEmpty(text) {
+        const tbody = document.getElementById("athletesTableBody");
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:18px;text-align:center;color:#777;">${text}</td></tr>`;
+      }
+
+      function renderTable(data) {
+        const tbody = document.getElementById("athletesTableBody");
+        tbody.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+          renderEmpty("Ничего не найдено");
+          return;
+        }
+
+        data.forEach((u) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${u.id ?? ""}</td>
+            <td>${u.username ?? ""}</td>
+            <td>${u.email ?? ""}</td>
+            <td>${u.sport ?? "—"}</td>
+            <td>${u.link_status ?? u.status ?? "—"}</td>
+            <td><button class="btn-small" data-athlete-id="${u.id}">Чат</button></td>
+            <td><button class="btn-small-outline" data-request-id="${u.id}">Отправить запрос</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.querySelectorAll("button[data-athlete-id]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const aid = btn.getAttribute("data-athlete-id");
+            window.location.href = `chat.html?peer_id=${aid}`;
+          });
+        });
+
+        document.querySelectorAll("button[data-request-id]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const aid = btn.getAttribute("data-request-id");
+            if (!coachId) return alert("Нет coachId в localStorage");
+
+            const res = await fetch(`${TRAINING_API}/api/coach/send-request`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ coach_id: coachId, athlete_id: Number(aid) }),
+            });
+
+            if (!res.ok) {
+              const t = await res.text().catch(() => "");
+              alert(`Ошибка отправки: ${res.status} ${t}`);
+              return;
+            }
+
+            btn.textContent = "Запрос отправлен";
+            btn.disabled = true;
+          });
+        });
+      }
+
+      async function loadAthletes(query = "") {
+        if (!coachId) return;
+
+        const q = (query || "").trim();
+
+        try {
+          let url = "";
+          if (!q) {
+            url = `${TRAINING_API}/api/coach/athletes?coach_id=${coachId}`;
+          } else {
+            const params = new URLSearchParams();
+            params.set("q", q);
+            params.set("coach_id", coachId);
+            url = `${USERS_API}/api/users/search?${params.toString()}`;
+          }
+
+          const res = await fetch(url);
+          if (!res.ok) {
+            renderEmpty("Ошибка загрузки");
+            return;
+          }
+
+          const data = await res.json();
+          renderTable(data);
+        } catch (e) {
+          console.error(e);
+          renderEmpty("Сервис недоступен");
+        }
+      }
+
+      const searchInput = document.getElementById("athleteSearch");
+      const searchBtn = document.getElementById("athleteSearchBtn");
+
+      searchBtn.addEventListener("click", () => loadAthletes(searchInput.value));
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") loadAthletes(searchInput.value);
+      });
+
+      // первая загрузка
+      loadAthletes("");
+    </script>
+  </body>
+</html>

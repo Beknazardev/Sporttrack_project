@@ -3,12 +3,14 @@ import uuid
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-import psycopg
+import psycopg2
 import random
 import smtplib
 from email.message import EmailMessage
 import hashlib
 import secrets
+
+from backend.users_service.database import Base
 
 app = FastAPI(title="SportTrack Auth Service")
 
@@ -53,7 +55,7 @@ def verify_password(plain_password: str, stored_value: str) -> bool:
 
 def get_connection():
     try:
-        conn = psycopg.connect(
+        conn = psycopg2.connect(
             dbname=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD,
@@ -105,6 +107,11 @@ class LogoutRequest(BaseModel):
 class AccountDelete(BaseModel):
     email: EmailStr
 
+class User(Base):
+    __tablename__ = "users"
+
+
+
 
 def send_reset_email(to_email: str, code: str):
     msg = EmailMessage()
@@ -144,7 +151,6 @@ def db_check():
     finally:
         cur.close()
         conn.close()
-
 
 @app.post("/api/register")
 def register(user: UserRegister, bg: BackgroundTasks):
@@ -452,3 +458,5 @@ def delete_account(data: AccountDelete):
     finally:
         cur.close()
         conn.close()
+
+

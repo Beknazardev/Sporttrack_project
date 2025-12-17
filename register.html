@@ -1,162 +1,259 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>SportTrack — Регистрация</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SportTrack — Кабинет спортсмена</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
 
-<body>
-
-    <div class="logo">SportTrack</div>
-
-    <div class="card" id="registerSection">
-        <h1 data-i18n="reg_title">Регистрация</h1>
-
-        <label data-i18n="reg_email_label">Почта</label>
-        <input type="email" id="email" placeholder="Email">
-
-        <label data-i18n="reg_username_label">Имя</label>
-        <input type="text" id="username" placeholder="Имя">
-
-        <label data-i18n="reg_lastname_label">Фамилия</label>
-        <input type="text" id="lastname" placeholder="Фамилия">
-
-        <label data-i18n="reg_password_label">Пароль</label>
-        <input type="password" id="password" placeholder="Пароль">
-
-        <label data-i18n="reg_sport_label">Введите ваш вид спорта</label>
-        <input type="text" id="sportInput" placeholder="Например: Футбол, Бокс...">
-        <p id="sportOutput"></p>
-
-        <label data-i18n="reg_role_label">Выберите роль</label>
-        <select id="role">
-            <option value="athlete" data-i18n="reg_role_athlete">Спортсмен</option>
-            <option value="coach" data-i18n="reg_role_coach">Тренер</option>
-        </select>
-
-        
+      <div class="top-bar__lang">
         <select id="langSelect" class="lang-select">
-            <option value="ru">Рус</option>
-            <option value="kz">Қаз</option>
-            <option value="en">Eng</option>
+          <option value="ru" data-i18n="lang_ru">Русский</option>
+          <option value="en" data-i18n="lang_en">English</option>
+          <option value="kz" data-i18n="lang_kz">Қазақша</option>
         </select>
+      </div>
+    </header>
 
-        <button id="registerBtn" class="btn-primary" data-i18n="reg_button">Зарегистрироваться</button>
-    </div>
+    <main class="coach-layout">
+      <!-- ЛЕВАЯ КАРТОЧКА СПОРТСМЕНА -->
+      <section class="panel coach-card">
+        <div class="coach-card__top">
+          <div class="coach-avatar">
+            <span
+              id="athleteAvatarLetter"
+              class="coach-avatar__text"
+            ></span>
+          </div>
 
-    <div class="card hidden" id="confirmSection">
-        <h1 data-i18n="confirm_title">Подтверждение почты</h1>
+          <div class="coach-card__info">
+            <h1 id="athleteName" class="coach-name"></h1>
 
-        <p data-i18n="confirm_desc">
-            Мы отправили код подтверждения на вашу почту.
-        </p>
+            <p class="coach-status">
+              <span data-i18n="athlete_label_status">Статус:</span>
+              &nbsp;
+              <span data-i18n="athlete_label_status_value">спортсмен</span>
+            </p>
 
-        <p><b>Email:</b> <span id="confirmEmailText"></span></p>
+            <button
+              id="editProfileBtn"
+              class="btn-link"
+              data-i18n="coach_edit_profile"
+            >
+              Редактировать профиль
+            </button>
+          </div>
+        </div>
 
-        <label data-i18n="confirm_code_label">Код из письма</label>
-        <input type="text" id="confirmCode" placeholder="123456">
+        <div class="coach-card__extra">
+          <div class="coach-info-row">
+            <span class="coach-label">ID:</span>
+            <span id="athleteIdValue"></span>
+          </div>
 
-        <button id="confirmBtn" class="btn-primary" data-i18n="confirm_button">Подтвердить</button>
+          <div class="coach-info-row">
+            <span
+              class="coach-label"
+              data-i18n="athlete_label_email"
+            >
+              Email:
+            </span>
+            <span id="athleteEmailValue"></span>
+          </div>
 
-        <a href="register.html" class="back-link" data-i18n="back_to_reg">← Назад к регистрации</a>
-    </div>
+          <div class="coach-info-row">
+            <span
+              class="coach-label"
+              id="athleteSportLabel"
+              data-i18n="athlete_label_sport"
+            >
+              Вид спорта:
+            </span>
+            <span id="athleteSportValue"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ПРАВАЯ КОЛОНКА -->
+      <section class="coach-right">
+        <div class="coach-right-header">
+          <h2 class="coach-welcome">
+            <span data-i18n="dashboard_welcome">Добро пожаловать</span>,
+            <span id="athleteFullName"></span>
+          </h2>
+
+          <button id="openChatFromAthlete" class="btn-primary btn-chat-header">
+            💬 Чат
+          </button>
+        </div>
+
+        <!-- 4 КАРТОЧКИ СПРАВА -->
+        <section class="coach-menu">
+          <a href="athlete_progress.html" class="coach-menu__item">
+            <div class="coach-menu__icon">📊</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="athlete_dashboard_progress_title"
+              >
+                Прогресс
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="athlete_dashboard_progress_sub"
+              >
+                Ваши результаты и статистика
+              </div>
+            </div>
+          </a>
+
+          <a href="athlete_workouts.html" class="coach-menu__item">
+            <div class="coach-menu__icon">💪</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="athlete_dashboard_workouts_title"
+              >
+                Мои тренировки
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="athlete_dashboard_workouts_sub"
+              >
+                Запланированные и выполненные тренировки
+              </div>
+            </div>
+          </a>
+
+          <a href="athlete_notifications.html" class="coach-menu__item">
+            <div class="coach-menu__icon">🔔</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="athlete_dashboard_notifications_title"
+              >
+                Уведомления
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="athlete_dashboard_notifications_sub"
+              >
+                Сообщения, отчёты, статусы
+              </div>
+            </div>
+          </a>
+
+          <a href="athlete_coach.html" class="coach-menu__item">
+            <div class="coach-menu__icon">🧑‍🏫</div>
+            <div class="coach-menu__text">
+              <div
+                class="coach-menu__title"
+                data-i18n="athlete_dashboard_coach_title"
+              >
+                Тренер
+              </div>
+              <div
+                class="coach-menu__sub"
+                data-i18n="athlete_dashboard_coach_sub"
+              >
+                Информация о вашем тренере
+              </div>
+            </div>
+          </a>
+        </section>
+      </section>
+
+      <!-- СТАТИСТИКА ПОД ЛЕВОЙ КАРТОЧКОЙ -->
+      <section class="coach-summary">
+        <div class="coach-summary__item">
+          <span class="coach-summary__number" id="athSummaryPlans">0</span>
+          <span
+            class="coach-summary__label"
+            data-i18n="dashboard_stats_plans"
+          >
+            Планов
+          </span>
+        </div>
+
+        <div class="coach-summary__item">
+          <span class="coach-summary__number" id="athSummaryWorkouts">0</span>
+          <span class="coach-summary__label">
+            Тренировок
+          </span>
+        </div>
+
+        <div class="coach-summary__item">
+          <span class="coach-summary__number" id="athSummaryTasks">0</span>
+          <span
+            class="coach-summary__label"
+            data-i18n="dashboard_stats_active_tasks"
+          >
+            Активных задач
+          </span>
+        </div>
+      </section>
+    </main>
 
     <script src="lang.js"></script>
-
     <script>
-        const API_BASE = "http://localhost:8000";
+      const rawAthlete = localStorage.getItem("user");
 
-        const sportInput = document.getElementById("sportInput");
-        const sportOutput = document.getElementById("sportOutput");
+      if (rawAthlete) {
+        try {
+          const user = JSON.parse(rawAthlete);
 
-        const registerSection = document.getElementById("registerSection");
-        const confirmSection = document.getElementById("confirmSection");
-        const confirmEmailText = document.getElementById("confirmEmailText");
+          const name = user.username || "";
+          const fullName =
+            (user.last_name
+              ? `${user.username} ${user.last_name}`
+              : user.full_name) ||
+            user.username ||
+            "";
 
-        sportInput.addEventListener("input", () => {
-            const sport = sportInput.value.trim();
-            const lang = localStorage.getItem("lang") || "ru";
+          if (name) {
+            document.getElementById("athleteName").textContent = name;
+          }
+          if (fullName) {
+            document.getElementById("athleteFullName").textContent = fullName;
+          }
 
-            let label = "Вид спорта: ";
-            if (lang === "en") label = "Sport: ";
-            if (lang === "kz") label = "Спорт түрі: ";
+          if (user.id !== undefined && user.id !== null) {
+            document.getElementById("athleteIdValue").textContent = user.id;
+          }
+          if (user.email) {
+            document.getElementById("athleteEmailValue").textContent =
+              user.email;
+          }
+          if (user.sport) {
+            document.getElementById("athleteSportValue").textContent =
+              user.sport;
+          }
 
-            sportOutput.textContent = sport ? label + sport : "";
+          const first = (user.username || fullName || "").trim()[0];
+          if (first) {
+            document.getElementById("athleteAvatarLetter").textContent =
+              first.toUpperCase();
+          }
+        } catch (e) {
+          console.error("Ошибка парсинга user из localStorage", e);
+        }
+      }
+
+      document
+        .getElementById("editProfileBtn")
+        .addEventListener("click", () => {
+          window.location.href = "athlete_profile_edit.html";
         });
 
-        document.getElementById("registerBtn").addEventListener("click", async () => {
-            const email = document.getElementById("email").value.trim();
-            const username = document.getElementById("username").value.trim();
-            const lastname = document.getElementById("lastname").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const sport = document.getElementById("sportInput").value.trim();
-            const role = document.getElementById("role").value;
-
-            if (!email || !username || !lastname || !password || !sport) {
-                alert("Заполните все поля!");
-                return;
-            }
-
-            localStorage.setItem("pending_user", JSON.stringify({
-                email, username, last_name: lastname, sport, role
-            }));
-
-            const res = await fetch(`${API_BASE}/api/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, username, password, role })
-            });
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                alert(err.detail || "Ошибка регистрации");
-                return;
-            }
-
-            registerSection.classList.add("hidden");
-            confirmSection.classList.remove("hidden");
-            confirmEmailText.textContent = email;
+      const chatBtnAth = document.getElementById("openChatFromAthlete");
+      if (chatBtnAth) {
+        chatBtnAth.addEventListener("click", () => {
+          window.location.href = "chat.html";
         });
-
-        document.getElementById("confirmBtn").addEventListener("click", async () => {
-            const code = document.getElementById("confirmCode").value.trim();
-            const pending = JSON.parse(localStorage.getItem("pending_user"));
-            if (!pending) {
-                alert("Сессия утеряна");
-                return;
-            }
-
-            const res = await fetch(`${API_BASE}/api/email/confirm`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: pending.email, code })
-            });
-
-            if (!res.ok) {
-                alert("Неверный код");
-                return;
-            }
-
-            const user = await res.json();
-
-            localStorage.setItem("user", JSON.stringify({
-                id: user.id,
-                email: user.email,
-                username: user.username,
-                last_name: pending.last_name,
-                sport: pending.sport,
-                role: user.role
-            }));
-
-            localStorage.removeItem("pending_user");
-
-            if (user.role === "coach") {
-                window.location.href = "coach_page.html";
-            } else {
-                window.location.href = "athlete_page.html";
-            }
-        });
+      }
     </script>
-</body>
+  </body>
 </html>

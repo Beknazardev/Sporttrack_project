@@ -1,188 +1,556 @@
-@font-face {
-    font-family: 'Montserrat';
-    src: url('fonts/Montserrat-Regular.ttf') format('truetype');
-    font-weight: 400;
-}
-@font-face {
-    font-family: 'Montserrat';
-    src: url('fonts/Montserrat-Bold.ttf') format('truetype');
-    font-weight: 700;
-}
+/* ---------- БАЗА ---------- */
 
-@font-face {
-    font-family: 'Inter';
-    src: url('fonts/Inter-Regular.ttf') format('truetype');
-    font-weight: 400;
-}
-
-@font-face {
-    font-family: 'Benzin';
-    src: url('fonts/Benzin.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+* {
+  box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    color: white;
-    background: linear-gradient(180deg, #0D00FB 0%, #6742FE 37%, #850EF5 100%);
-    background-attachment: scroll;
-    font-family: 'Inter', sans-serif;
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #0011ff, #7b00ff);
+  min-height: 100vh;
+  color: #ffffff;
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 25px 60px;
+/* ---------- ВЕРХНЯЯ ПАНЕЛЬ / ЛОГО ---------- */
+
+.top-bar {
+  width: 100%;
+  height: 64px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-.logo {
-    font-family: 'Benzin', sans-serif;
-    font-size: 36px;
-    letter-spacing: 2px;
+.top-bar__logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.nav a {
-    margin-left: 35px;
-    color: white;
-    text-decoration: none;
-    font-family: 'Montserrat';
-    font-size: 18px;
+.top-bar__lang {
+  display: flex;
+  align-items: center;
 }
 
-.hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 80px 60px;
+.lang-select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid #cbd5f5;
+  background: #ffffff;
+  cursor: pointer;
 }
 
-.hero-text h1 {
-    font-family: 'Montserrat';
-    font-size: 48px;
-    font-weight: 700;
+/* Логотип на страницах входа, если без top-bar */
+.top-logo {
+  font-size: 30px;
+  font-weight: 700;
+  padding: 20px 40px;
 }
 
-.hero-text p {
-    width: 420px;
-    font-size: 18px;
-    margin-bottom: 35px;
+/* ---------- ОБЩИЕ ЭЛЕМЕНТЫ ---------- */
+
+.input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+  color: #111827;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.hero-buttons .btn {
-    display: inline-block;
-    padding: 15px 35px;
-    border-radius: 30px;
-    font-family: 'Montserrat';
-    font-weight: 700;
-    font-size: 20px;
-    cursor: pointer;
-    text-decoration: none;
+.input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
-.btn.big {
-    background: #D728FF;
-    color: white;
-    margin-right: 20px;
+.btn-primary {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #6a5af9, #a066ff);
+  color: #ffffff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 14px rgba(120, 60, 255, 0.35);
 }
 
-.btn.small {
-    background: transparent;
-    color: white;
-    border: 2px solid white;
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(120, 60, 255, 0.45);
 }
 
-.features {
-    text-align: center;
-    padding: 40px 0;
+.btn-primary:active {
+  transform: translateY(1px);
 }
 
-.features h2 {
-    font-family: 'Montserrat';
-    font-size: 30px;
-    font-weight: 700;
+.btn-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
-.features-grid {
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    margin-top: 30px;
+/* маленькие кнопки в таблицах */
+.btn-small {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  background: #2563eb;
+  color: #ffffff;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.card {
-    width: 200px;
-    background: white;
-    color: black;
-    padding: 20px;
-    border-radius: 22px;
-    font-family: 'Benzin';
-    text-align: center;
+.btn-small:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-.roles {
-    text-align: center;
-    margin-top: 50px;
+.btn-small-outline {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #6a5af9;
+  cursor: pointer;
+  font-size: 12px;
+  background: transparent;
+  color: #4b4b4b;
+  transition: 0.15s ease;
 }
 
-.roles-grid {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 20px;
+.btn-small-outline:hover {
+  background: rgba(106, 90, 249, 0.08);
 }
 
-.role {
-    width: 220px;
-    height: 280px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Montserrat';
-    font-size: 28px;
-    cursor: pointer;
-    color: white;
+/* ---------- ЛОГИН ---------- */
+
+.login-container {
+  width: 420px;
+  margin: 40px auto;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  border-radius: 22px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  color: #111827;
 }
 
-
-.about {
-    width: 60%;
-    margin: 60px auto;
-    text-align: center;
+.login-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 25px;
+  text-align: center;
 }
 
-.about h2 {
-    font-family: 'Montserrat';
-    font-size: 32px;
-    margin-bottom: 20px;
+.login-label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
 }
 
-.about p {
-    font-size: 18px;
-    line-height: 1.5;
-    font-family: 'Benzin', 'sans-serif';
+.login-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  margin-bottom: 16px;
+  outline: none;
+  transition: 0.15s ease;
 }
 
-
-.footer {
-    background: black;
-    padding: 40px;
-    color: white;
+.login-input:focus {
+  border-color: #6a5af9;
+  box-shadow: 0 0 0 3px rgba(120, 95, 255, 0.3);
 }
 
-.footer ul {
-    list-style: none;
-    padding: 0;
-    margin-top: 20px;
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  background: linear-gradient(135deg, #6a5af9, #a066ff);
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.2s ease;
+  box-shadow: 0 6px 14px rgba(120, 60, 255, 0.35);
 }
 
-.footer li a {
-    text-decoration: none;
-    color: white;
-    display: block;
-    margin-bottom: 10px;
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(120, 60, 255, 0.45);
+}
+
+.login-btn:active {
+  transform: translateY(1px);
+}
+
+.login-links {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.login-links a {
+  color: #6a5af9;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-links a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- КАБИНЕТ ТРЕНЕРА / СПОРТСМЕНА ---------- */
+
+.coach-layout {
+  max-width: 1200px;
+  margin: 32px auto 40px;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  grid-template-rows: auto auto;
+  gap: 24px 32px;
+  align-items: flex-start;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 24px;
+  padding: 20px 24px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+.coach-card {
+  grid-row: 1 / span 2;
+}
+
+.coach-card__top {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.coach-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 25% 20%, #ffffff, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 36px;
+  font-weight: 700;
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.45);
+}
+
+.coach-avatar__text {
+  margin-top: 4px;
+}
+
+.coach-card__info {
+  flex: 1;
+}
+
+.coach-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.coach-status {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.coach-card__extra {
+  margin-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.coach-info-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.coach-label {
+  font-weight: 600;
+}
+
+/* правый столбец */
+
+.coach-right {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.coach-right-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.coach-welcome {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* красивая кнопка чата */
+
+.btn-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #6a5af9, #a066ff);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow: 0 6px 14px rgba(120, 60, 255, 0.35);
+}
+
+.btn-chat-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px rgba(120, 60, 255, 0.45);
+}
+
+.btn-chat-header:active {
+  transform: translateY(1px);
+}
+
+/* 4 карточки справа */
+
+.coach-menu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.coach-menu__item {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  padding: 18px;
+  display: flex;
+  gap: 16px;
+  text-decoration: none;
+  color: #111827;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
+}
+
+.coach-menu__item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.45);
+}
+
+.coach-menu__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.coach-menu__text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.coach-menu__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.coach-menu__sub {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* статистика под левой карточкой */
+
+.coach-summary {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  display: flex;
+  gap: 16px;
+  margin-top: -8px;
+}
+
+.coach-summary__item {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
+  color: #111827;
+}
+
+.coach-summary__number {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.coach-summary__label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ---------- ВНУТРЕННИЕ СТРАНИЦЫ (СПОРТСМЕНЫ и т.п.) ---------- */
+
+.page-inner {
+  max-width: 1200px;
+  margin: 32px auto 40px;
+  padding: 0 24px;
+}
+
+.page-header-block {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.panel--wide {
+  width: 100%;
+}
+
+.panel-header {
+  margin-bottom: 16px;
+}
+
+.panel-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.input--search {
+  width: 100%;
+  max-width: 360px;
+}
+
+.search-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #777;
+}
+
+/* таблица */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead tr {
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.table thead th {
+  font-weight: 600;
+  color: #111827;
+}
+
+.table tbody tr:nth-child(odd) {
+  background: #fafafa;
+}
+
+/* ---------- АДАПТИВ ---------- */
+
+@media (max-width: 992px) {
+  .coach-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .coach-card {
+    grid-row: 1 / 2;
+  }
+
+  .coach-right {
+    grid-row: 2 / 3;
+    grid-column: 1 / 2;
+  }
+
+  .coach-summary {
+    grid-row: 3 / 4;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel {
+    padding: 16px;
+  }
+
+  .coach-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .top-bar {
+    padding: 0 16px;
+  }
+
+  .page-inner {
+    padding: 0 16px;
+  }
+
+  .login-container {
+    width: 100%;
+    max-width: 380px;
+    margin: 24px auto;
+  }
 }
