@@ -2,82 +2,180 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>SportTrack — Спортсмен</title>
-    <link rel="stylesheet" href="fonts.css">
-    <link rel="stylesheet" href="athlete_main.css">
+    <title>SportTrack — Профиль спортсмена</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 30px; background-color: #f5f5f5; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .lang-select { padding: 6px 10px; }
+        h1 { margin-bottom: 20px; }
+        .profile-container {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            max-width: 650px;
+        }
+        .avatar-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar-block img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ddd;
+            background: #eee;
+        }
+        .avatar-block input[type="file"] {
+            font-size: 14px;
+        }
+        .info-block p { margin: 6px 0; font-size: 15px; }
+        .label { font-weight: bold; }
+        .back-link {
+            display: inline-block; margin-top: 20px;
+            text-decoration: none; color: #0077ff; font-size: 14px;
+        }
+        .back-link:hover { text-decoration: underline; }
+    </style>
 </head>
+
 <body>
 
-<header class="top-header">
-    <div class="logo">SPORTTRACK</div>
-    <div class="lang">KZ | RU | ENG</div>
-</header>
+    <div class="top-bar">
+        <div><strong data-i18n="app_title">SportTrack</strong></div>
+        <div>
+            <select id="langSelect" class="lang-select">
+                <option value="ru" data-i18n="lang_ru">Русский</option>
+                <option value="en" data-i18n="lang_en">English</option>
+                <option value="kz" data-i18n="lang_kz">Қазақша</option>
+            </select>
+        </div>
+    </div>
 
-<main class="container">
+    <h1 data-i18n="athlete_page_title">Профиль спортсмена</h1>
 
-    <aside class="sidebar">
-        <div class="profile-block">
-            <div class="avatar"></div>
-            <p class="edit">редактирование</p>
-
-            <p class="info-label" id="profileName">name</p>
-            <p class="info-label">спортсмен</p>
-            <p class="info-label">вид спорта</p>
+    <div class="profile-container">
+        <div class="avatar-block">
+            <img id="avatarPreview" src="images/default-avatar.png" alt="Аватар">
+            <input type="file" id="avatarInput" accept="image/*">
         </div>
 
-        <nav class="nav-list">
-            <a class="nav-item" href="#">Следующая тренировка</a>
-            <a class="nav-item" href="#">Мои цели</a>
-            <a class="nav-item" href="#">Статистика</a>
-            <a class="nav-item" href="#">Нагрузка на неделю</a>
-            <a class="nav-item" href="#">Оповещения</a>
-        </nav>
-    </aside>
-
-   
-    <section class="actions">
-
-        <div class="action-block">
-            <button class="btn">тренировки</button>
-            <img src="img/workout.png" class="icon">
+        <div class="info-block">
+            <p>
+                <span class="label" data-i18n="athlete_label_fullname">Имя и фамилия:</span>
+                <span id="athleteFullName">—</span>
+            </p>
+            <p>
+                <span class="label" data-i18n="athlete_label_status">Статус:</span>
+                <span id="athleteStatus" data-i18n="athlete_label_status_value">спортсмен</span>
+            </p>
+            <p>
+                <span class="label" data-i18n="athlete_label_sport">Вид спорта:</span>
+                <span id="athleteSport">—</span>
+            </p>
+            <p>
+                <span class="label" data-i18n="athlete_label_email">Email:</span>
+                <span id="athleteEmail">—</span>
+            </p>
         </div>
+    </div>
 
-        <div class="action-block">
-            <button class="btn">прогресс недели</button>
-            <img src="img/progress.png" class="icon">
-        </div>
+    <script src="lang.js"></script>
 
-        <div class="action-block">
-            <button class="btn">сообщения</button>
-            <img src="img/messages.png" class="icon">
-        </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const rawUser = localStorage.getItem("user");
+            if (!rawUser) {
+                alert("Пользователь не найден. Пройдите регистрацию.");
+                window.location.href = "registration.html";
+                return;
+            }
 
-        <div class="action-block">
-            <button class="btn">расписание</button>
-            <img src="img/calendar.png" class="icon">
-        </div>
+            const user = JSON.parse(rawUser);
 
-    </section>
+            const fullNameEl = document.getElementById("athleteFullName");
+            const emailEl = document.getElementById("athleteEmail");
+            const sportEl = document.getElementById("athleteSport");
+            const avatarPreview = document.getElementById("avatarPreview");
 
-</main>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const raw = localStorage.getItem("user");
-    if (!raw) {
-        window.location.href = "login.html";
-        return;
-    }
+            const firstName = user.username || "";
+            const lastName = user.last_name || "";
+            const fullName = (firstName + " " + lastName).trim();
 
-    const user = JSON.parse(raw);
+            if (fullNameEl) fullNameEl.textContent = fullName || "—";
+            if (emailEl) emailEl.textContent = user.email || "—";
+            if (sportEl) sportEl.textContent = user.sport || "—";
 
-    if (user.role !== "athlete") {
-        window.location.href = "landing.html";
-        return;
-    }
+            if (user.avatar_url && avatarPreview) {
+                avatarPreview.src = "http://localhost:8000" + user.avatar_url;
+            } else {
+                const savedAvatar = localStorage.getItem("avatar_athlete");
+                if (savedAvatar && avatarPreview) {
+                    avatarPreview.src = savedAvatar;
+                }
+            }
+        });
 
-    const nameElem = document.getElementById("profileName");
-    if (nameElem) nameElem.textContent = user.username || "Без имени";
-});
-</script>
+        const avatarInput = document.getElementById("avatarInput");
+        const avatarPreview = document.getElementById("avatarPreview");
+
+        if (avatarInput) {
+            avatarInput.addEventListener("change", () => {
+                const file = avatarInput.files[0];
+                if (!file) return;
+
+                const rawUser = localStorage.getItem("user");
+                if (!rawUser) {
+                    alert("Пользователь не найден");
+                    return;
+                }
+                const user = JSON.parse(rawUser);
+
+                
+                const haveBackend = false; 
+
+                if (!haveBackend) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const dataUrl = reader.result;
+                        avatarPreview.src = dataUrl;
+                        localStorage.setItem("avatar_athlete", dataUrl);
+                    };
+                    reader.readAsDataURL(file);
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("file", file);
+
+                fetch(`http://localhost:8000/api/users/${user.id}/avatar`, {
+                    method: "POST",
+                    body: formData,
+                })
+                  .then(res => {
+                      if (!res.ok) throw new Error("Ошибка загрузки аватара");
+                      return res.json();
+                  })
+                  .then(data => {
+                      const fullUrl = "http://localhost:8000" + data.avatar_url;
+                      avatarPreview.src = fullUrl;
+
+                      user.avatar_url = data.avatar_url;
+                      localStorage.setItem("user", JSON.stringify(user));
+                  })
+                  .catch(err => {
+                      console.error(err);
+                      alert("Не удалось загрузить аватар. Попробуйте ещё раз.");
+                  });
+            });
+        }
+    </script>
+
 </body>
 </html>

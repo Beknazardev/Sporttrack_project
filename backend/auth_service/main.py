@@ -1,13 +1,14 @@
+import os
+import uuid
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-import psycopg2
+import psycopg
 import random
 import smtplib
 from email.message import EmailMessage
 import hashlib
-import secrets  # для генерации соли
-
+import secrets
 
 app = FastAPI(title="SportTrack Auth Service")
 
@@ -23,24 +24,20 @@ DB_NAME = "sporttrack"
 DB_USER = "postgres"
 DB_PASSWORD = "Postgres123"
 DB_HOST = "localhost"
-DB_PORT = "5432"
+DB_PORT = 5432
 
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
 SMTP_USER = "sporttrack.project@gmail.com"
 SMTP_PASSWORD = "cfng hixo xptz kmfm"
 
-# ====== ХЭШИРОВАНИЕ ПАРОЛЯ (SHA256 + salt + pepper) ======
-
-PEPPER = "super_secret_pepper_123"  # для учебного проекта можно так, в реале в .env
+PEPPER = "super_secret_pepper_123"
 
 
 def hash_password(password: str) -> str:
-    # соль 16 байт => 32 hex-символа
     salt = secrets.token_hex(16)
     data = (password + PEPPER + salt).encode("utf-8")
     pwd_hash = hashlib.sha256(data).hexdigest()
-    # в БД храним "salt$hash"
     return f"{salt}${pwd_hash}"
 
 
@@ -49,17 +46,14 @@ def verify_password(plain_password: str, stored_value: str) -> bool:
         salt, stored_hash = stored_value.split("$", 1)
     except ValueError:
         return False
-
     data = (plain_password + PEPPER + salt).encode("utf-8")
     check_hash = hashlib.sha256(data).hexdigest()
     return check_hash == stored_hash
 
 
-# ====== БАЗА ДАННЫХ ======
-
 def get_connection():
     try:
-        conn = psycopg2.connect(
+        conn = psycopg.connect(
             dbname=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD,
@@ -72,8 +66,6 @@ def get_connection():
         print("DB CONNECT ERROR:", e)
         raise HTTPException(status_code=500, detail=f"DB CONNECT ERROR: {e}")
 
-
-# ====== Pydantic-модели ======
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -114,15 +106,12 @@ class AccountDelete(BaseModel):
     email: EmailStr
 
 
-# ====== Email-отправка ======
-
 def send_reset_email(to_email: str, code: str):
     msg = EmailMessage()
     msg["Subject"] = "Код для сброса пароля"
     msg["From"] = SMTP_USER
     msg["To"] = to_email
     msg.set_content(f"Ваш код для сброса пароля: {code}")
-
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
         server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
@@ -134,13 +123,10 @@ def send_confirm_email(to_email: str, code: str):
     msg["From"] = SMTP_USER
     msg["To"] = to_email
     msg.set_content(f"Ваш код: {code}")
-
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
         server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
 
-
-# ====== Эндпоинты ======
 
 @app.get("/api/ping")
 def ping():
@@ -154,47 +140,51 @@ def db_check():
     try:
         cur.execute("SELECT 1")
         row = cur.fetchone()
+        return {"db_ok": True, "result": row[0]}
     finally:
         cur.close()
         conn.close()
-    return {"db_ok": True, "result": row[0]}
 
 
 @app.post("/api/register")
-def register(user: UserRegister):
+def register(user: UserRegister, bg: BackgroundTasks):
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # 1) Проверка email
         cur.execute("SELECT id FROM users WHERE email = %s", (user.email,))
         if cur.fetchone():
             raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
 
-        # 2) Простейшая проверка пароля
         if len(user.password) < 4:
             raise HTTPException(status_code=400, detail="Пароль слишком короткий")
 
-        # 3) Хэшируем пароль
-        hashed = hash_password(user.password)
+        password_hash = hash_password(user.password)
+        code = str(random.randint(100000, 999999))
 
-        # 4) Вставляем пользователя
         cur.execute(
             """
-            INSERT INTO users (email, username, password, role)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id, is_active, is_email_confirmed
+            UPDATE pending_users
+            SET is_used = TRUE
+            WHERE email = %s AND is_used = FALSE
             """,
-            (user.email, user.username, hashed, user.role),
+            (user.email,),
         )
-        user_id, is_active, is_email_confirmed = cur.fetchone()
+
+        cur.execute(
+            """
+            INSERT INTO pending_users (email, username, password_hash, role, code)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (user.email, user.username, password_hash, user.role, code),
+        )
+        pending_id = cur.fetchone()[0]
+
+        bg.add_task(send_confirm_email, user.email, code)
 
         return {
-            "id": user_id,
-            "email": user.email,
-            "username": user.username,
-            "role": user.role,
-            "is_active": is_active,
-            "is_email_confirmed": is_email_confirmed,
+            "pending_id": pending_id,
+            "message": "Регистрация начата. Код отправлен на email. Введите код для завершения регистрации."
         }
     except HTTPException:
         raise
@@ -211,29 +201,33 @@ def email_send_code(data: EmailConfirmRequest, bg: BackgroundTasks):
     conn = get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT id FROM users WHERE email = %s", (data.email,))
+        cur.execute(
+            "SELECT id FROM pending_users WHERE email = %s AND is_used = FALSE",
+            (data.email,),
+        )
         row = cur.fetchone()
         if not row:
-            raise HTTPException(400, "Пользователь не найден")
-        user_id = row[0]
+            raise HTTPException(
+                status_code=400,
+                detail="Незавершённая регистрация не найдена. Попробуйте зарегистрироваться заново.",
+            )
 
+        pending_id = row[0]
         code = str(random.randint(100000, 999999))
 
         cur.execute(
-            """
-            UPDATE email_confirm_codes
-            SET is_used = TRUE
-            WHERE user_id = %s AND is_used = FALSE
-            """,
-            (user_id,),
-        )
-        cur.execute(
-            "INSERT INTO email_confirm_codes (user_id, code) VALUES (%s, %s)",
-            (user_id, code),
+            "UPDATE pending_users SET code = %s WHERE id = %s",
+            (code, pending_id),
         )
 
         bg.add_task(send_confirm_email, data.email, code)
-        return {"message": "Код отправлен"}
+
+        return {"message": "Код повторно отправлен на email"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("EMAIL SEND CODE ERROR:", e)
+        raise HTTPException(status_code=500, detail="Ошибка отправки кода")
     finally:
         cur.close()
         conn.close()
@@ -244,40 +238,61 @@ def email_confirm(data: EmailConfirmCheck):
     conn = get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT id FROM users WHERE email = %s", (data.email,))
-        row = cur.fetchone()
-        if not row:
-            raise HTTPException(400, "Пользователь не найден")
-        user_id = row[0]
-
         cur.execute(
             """
-            SELECT id, is_used
-            FROM email_confirm_codes
-            WHERE user_id = %s AND code = %s
+            SELECT id, username, password_hash, role, is_used
+            FROM pending_users
+            WHERE email = %s AND code = %s
             ORDER BY created_at DESC
             LIMIT 1
             """,
-            (user_id, data.code),
+            (data.email, data.code),
         )
-        code_row = cur.fetchone()
-        if not code_row:
-            raise HTTPException(400, "Неверный код")
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(
+                status_code=400,
+                detail="Неверный код или регистрация не найдена"
+            )
 
-        code_id, is_used = code_row
+        pending_id, username, password_hash, role, is_used = row
         if is_used:
-            raise HTTPException(400, "Код уже использован")
+            raise HTTPException(
+                status_code=400,
+                detail="Код уже использован. Начните регистрацию заново."
+            )
+
+        cur.execute("SELECT id FROM users WHERE email = %s", (data.email,))
+        if cur.fetchone():
+            raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
 
         cur.execute(
-            "UPDATE email_confirm_codes SET is_used = TRUE WHERE id = %s",
-            (code_id,),
+            """
+            INSERT INTO users (email, username, password, role, is_active)
+            VALUES (%s, %s, %s, %s, TRUE)
+            RETURNING id
+            """,
+            (data.email, username, password_hash, role),
         )
+        user_id = cur.fetchone()[0]
+
         cur.execute(
-            "UPDATE users SET is_email_confirmed = TRUE WHERE id = %s",
-            (user_id,),
+            "UPDATE pending_users SET is_used = TRUE WHERE id = %s",
+            (pending_id,),
         )
 
-        return {"message": "Email подтверждён"}
+        return {
+            "message": "Email подтверждён, аккаунт создан",
+            "id": user_id,
+            "email": data.email,
+            "username": username,
+            "role": role,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("EMAIL CONFIRM ERROR:", e)
+        raise HTTPException(status_code=500, detail="Ошибка подтверждения email")
     finally:
         cur.close()
         conn.close()
@@ -290,7 +305,7 @@ def login(data: UserLogin):
     try:
         cur.execute(
             """
-            SELECT id, username, password, role, is_active, is_email_confirmed
+            SELECT id, username, password, role, is_active
             FROM users
             WHERE email = %s
             """,
@@ -300,17 +315,14 @@ def login(data: UserLogin):
         if not row:
             raise HTTPException(400, "Неверный email или пароль")
 
-        user_id, username, db_password, role, is_active, is_email_confirmed = row
+        user_id, username, db_password, role, is_active = row
 
         if not is_active:
             raise HTTPException(400, "Аккаунт удалён")
 
-        if not is_email_confirmed:
-            raise HTTPException(400, "Подтвердите email перед входом")
-
         ok = verify_password(data.password, db_password)
         if not ok:
-            raise HTTPException(400, "Неверный пароль")
+            raise HTTPException(400, "Неверный email или пароль")
 
         return {
             "id": user_id,
@@ -318,8 +330,12 @@ def login(data: UserLogin):
             "username": username,
             "role": role,
             "is_active": is_active,
-            "is_email_confirmed": is_email_confirmed,
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("LOGIN ERROR:", e)
+        raise HTTPException(status_code=500, detail="Ошибка авторизации")
     finally:
         cur.close()
         conn.close()
@@ -334,8 +350,8 @@ def reset_req(data: PasswordResetRequest, bg: BackgroundTasks):
         row = cur.fetchone()
         if not row:
             raise HTTPException(400, "Пользователь не найден")
-        user_id = row[0]
 
+        user_id = row[0]
         code = str(random.randint(100000, 999999))
 
         cur.execute(
@@ -346,12 +362,14 @@ def reset_req(data: PasswordResetRequest, bg: BackgroundTasks):
             """,
             (user_id,),
         )
+
         cur.execute(
             "INSERT INTO password_reset_codes (user_id, code) VALUES (%s, %s)",
             (user_id, code),
         )
 
         bg.add_task(send_reset_email, data.email, code)
+
         return {"message": "Код отправлен"}
     finally:
         cur.close()
@@ -367,6 +385,7 @@ def reset_confirm(data: PasswordResetConfirm):
         row = cur.fetchone()
         if not row:
             raise HTTPException(400, "Пользователь не найден")
+
         user_id = row[0]
 
         cur.execute(
@@ -413,11 +432,21 @@ def delete_account(data: AccountDelete):
         row = cur.fetchone()
         if not row:
             raise HTTPException(400, "Пользователь не найден")
+
         user_id = row[0]
 
-        cur.execute("DELETE FROM password_reset_codes WHERE user_id = %s", (user_id,))
-        cur.execute("DELETE FROM email_confirm_codes WHERE user_id = %s", (user_id,))
-        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        cur.execute(
+            "DELETE FROM password_reset_codes WHERE user_id = %s",
+            (user_id,),
+        )
+        cur.execute(
+            "DELETE FROM email_confirm_codes WHERE user_id = %s",
+            (user_id,),
+        )
+        cur.execute(
+            "DELETE FROM users WHERE id = %s",
+            (user_id,),
+        )
 
         return {"message": "Аккаунт удалён"}
     finally:

@@ -3,68 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <title>SportTrack — Регистрация</title>
-    <link rel="stylesheet" href="fonts.css">
-    <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-<header class="top-header">
-    <div class="logo">SPORTTRACK</div>
-    <div class="lang">KZ | RU | ENG</div>
-</header>
+    <div class="logo">SportTrack</div>
 
-<main class="main">
-    <section class="auth-box">
+    <div class="card" id="registerSection">
+        <h1 data-i18n="reg_title">Регистрация</h1>
 
-        <h1 class="title">Регистрация</h1>
-        <h2 class="subtitle">Введите данные для создания аккаунта</h2>
+        <label data-i18n="reg_email_label">Почта</label>
+        <input type="email" id="email" placeholder="Email">
 
-        <!-- ФОРМА РЕГИСТРАЦИИ -->
-        <form id="registerForm">
-            <label class="input-label" for="email">Email</label>
-            <input id="email" type="email" class="input-field" placeholder="email">
+        <label data-i18n="reg_username_label">Имя</label>
+        <input type="text" id="username" placeholder="Имя">
 
-            <label class="input-label" for="username">Имя</label>
-            <input id="username" type="text" class="input-field" placeholder="Имя">
+        <label data-i18n="reg_lastname_label">Фамилия</label>
+        <input type="text" id="lastname" placeholder="Фамилия">
 
-            <label class="input-label" for="password">Пароль</label>
-            <input id="password" type="password" class="input-field" placeholder="пароль" maxlength="72">
+        <label data-i18n="reg_password_label">Пароль</label>
+        <input type="password" id="password" placeholder="Пароль">
 
-            <label class="input-label" for="role">Роль</label>
-            <select id="role" class="input-field">
-                <option value="">Выберите роль</option>
-                <option value="athlete">Спортсмен</option>
-                <option value="coach">Тренер</option>
-                <option value="admin">Админ</option>
-            </select>
+        <label data-i18n="reg_sport_label">Введите ваш вид спорта</label>
+        <input type="text" id="sportInput" placeholder="Например: Футбол, Бокс...">
+        <p id="sportOutput"></p>
 
-            <button id="registerBtn" type="button" class="btn">Зарегистрироваться</button>
+        <label data-i18n="reg_role_label">Выберите роль</label>
+        <select id="role">
+            <option value="athlete" data-i18n="reg_role_athlete">Спортсмен</option>
+            <option value="coach" data-i18n="reg_role_coach">Тренер</option>
+        </select>
 
-            <p id="registerStatus" class="status"></p>
+        
+        <select id="langSelect" class="lang-select">
+            <option value="ru">Рус</option>
+            <option value="kz">Қаз</option>
+            <option value="en">Eng</option>
+        </select>
 
-            <p class="small-text">
-                Уже есть аккаунт?
-                <a href="login.html" class="link">Войти</a>
-            </p>
-        </form>
+        <button id="registerBtn" class="btn-primary" data-i18n="reg_button">Зарегистрироваться</button>
+    </div>
 
-        <!-- ФОРМА ПОДТВЕРЖДЕНИЯ КОДА -->
-        <form id="confirmForm" style="display: none; margin-top: 24px;">
-            <h2 class="subtitle">Подтверждение email</h2>
+    <div class="card hidden" id="confirmSection">
+        <h1 data-i18n="confirm_title">Подтверждение почты</h1>
 
-            <p id="confirmInfo" class="small-text"></p>
+        <p data-i18n="confirm_desc">
+            Мы отправили код подтверждения на вашу почту.
+        </p>
 
-            <label class="input-label" for="code">Код</label>
-            <input id="code" type="text" class="input-field" placeholder="000000">
+        <p><b>Email:</b> <span id="confirmEmailText"></span></p>
 
-            <button id="confirmBtn" type="button" class="btn">Подтвердить</button>
+        <label data-i18n="confirm_code_label">Код из письма</label>
+        <input type="text" id="confirmCode" placeholder="123456">
 
-            <p id="confirmStatus" class="status"></p>
-        </form>
+        <button id="confirmBtn" class="btn-primary" data-i18n="confirm_button">Подтвердить</button>
 
-    </section>
-</main>
+        <a href="register.html" class="back-link" data-i18n="back_to_reg">← Назад к регистрации</a>
+    </div>
 
-<script src="auth_register.js"></script>
+    <script src="lang.js"></script>
+
+    <script>
+        const API_BASE = "http://localhost:8000";
+
+        const sportInput = document.getElementById("sportInput");
+        const sportOutput = document.getElementById("sportOutput");
+
+        const registerSection = document.getElementById("registerSection");
+        const confirmSection = document.getElementById("confirmSection");
+        const confirmEmailText = document.getElementById("confirmEmailText");
+
+        sportInput.addEventListener("input", () => {
+            const sport = sportInput.value.trim();
+            const lang = localStorage.getItem("lang") || "ru";
+
+            let label = "Вид спорта: ";
+            if (lang === "en") label = "Sport: ";
+            if (lang === "kz") label = "Спорт түрі: ";
+
+            sportOutput.textContent = sport ? label + sport : "";
+        });
+
+        document.getElementById("registerBtn").addEventListener("click", async () => {
+            const email = document.getElementById("email").value.trim();
+            const username = document.getElementById("username").value.trim();
+            const lastname = document.getElementById("lastname").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const sport = document.getElementById("sportInput").value.trim();
+            const role = document.getElementById("role").value;
+
+            if (!email || !username || !lastname || !password || !sport) {
+                alert("Заполните все поля!");
+                return;
+            }
+
+            localStorage.setItem("pending_user", JSON.stringify({
+                email, username, last_name: lastname, sport, role
+            }));
+
+            const res = await fetch(`${API_BASE}/api/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, username, password, role })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.detail || "Ошибка регистрации");
+                return;
+            }
+
+            registerSection.classList.add("hidden");
+            confirmSection.classList.remove("hidden");
+            confirmEmailText.textContent = email;
+        });
+
+        document.getElementById("confirmBtn").addEventListener("click", async () => {
+            const code = document.getElementById("confirmCode").value.trim();
+            const pending = JSON.parse(localStorage.getItem("pending_user"));
+            if (!pending) {
+                alert("Сессия утеряна");
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/api/email/confirm`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: pending.email, code })
+            });
+
+            if (!res.ok) {
+                alert("Неверный код");
+                return;
+            }
+
+            const user = await res.json();
+
+            localStorage.setItem("user", JSON.stringify({
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                last_name: pending.last_name,
+                sport: pending.sport,
+                role: user.role
+            }));
+
+            localStorage.removeItem("pending_user");
+
+            if (user.role === "coach") {
+                window.location.href = "coach_page.html";
+            } else {
+                window.location.href = "athlete_page.html";
+            }
+        });
+    </script>
 </body>
 </html>
