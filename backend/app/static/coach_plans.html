@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Планы тренировок</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo">SportTrack</div>
+  <button class="btn-link" onclick="history.back()">← Назад</button>
+</header>
+
+<main class="page">
+  <h1 class="page-title">Планы тренировок</h1>
+
+  <div class="panel">
+    <label class="label">Спортсмен</label>
+    <select id="athleteSelect" class="input"></select>
+
+    <label class="label">Название плана</label>
+    <input id="planName" class="input" placeholder="Например: Подготовка 4 недели" />
+
+    <label class="label">Содержание (по дням)</label>
+    <textarea id="planBody" class="input" rows="6" placeholder="День 1: ...&#10;День 2: ..."></textarea>
+
+    <div class="row">
+      <button id="saveBtn" class="btn-primary">Сохранить</button>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="page-subtitle">Созданные планы</h2>
+    <div id="plansList" class="list"></div>
+  </div>
+</main>
+
+<script>
+const me = JSON.parse(localStorage.getItem("user") || "null");
+if (!me || me.role !== "coach") location.href = "login.html";
+
+const sel = document.getElementById("athleteSelect");
+const statusEl = document.getElementById("status");
+const listEl = document.getElementById("plansList");
+
+function setStatus(text, ok=false){
+  statusEl.textContent = text;
+  statusEl.className = "status " + (ok ? "success" : "error");
+}
+
+function fillAthletes(){
+  const athletes = JSON.parse(localStorage.getItem("demo_athletes") || "[]");
+  sel.innerHTML = athletes.length
+    ? athletes.map(a => `<option value="${a.id}">${a.username} ${a.last_name||""}</option>`).join("")
+    : `<option value="">Нет спортсменов</option>`;
+}
+
+function render(){
+  const all = JSON.parse(localStorage.getItem("demo_plans") || "[]");
+  listEl.innerHTML = all.length ? all.map(p => `
+    <div class="list-item">
+      <div>
+        <div class="list-title">${p.name}</div>
+        <div class="list-sub">athlete_id: ${p.athlete_id} • ${new Date(p.created_at).toLocaleString()}</div>
+      </div>
+      <button class="btn-link" onclick='alert(${JSON.stringify(p.body)})'>Посмотреть</button>
+    </div>
+  `).join("") : `<div class="muted">Планов пока нет</div>`;
+}
+
+document.getElementById("saveBtn").onclick = async () => {
+  const athlete_id = sel.value;
+  const name = document.getElementById("planName").value.trim();
+  const body = document.getElementById("planBody").value.trim();
+  statusEl.textContent = ""; statusEl.className = "status";
+
+  if (!athlete_id || !name || !body) return setStatus("Заполни спортсмена/название/содержание");
+
+  const all = JSON.parse(localStorage.getItem("demo_plans") || "[]");
+  all.unshift({ id: Date.now(), coach_id: me.id, athlete_id: Number(athlete_id), name, body, created_at: Date.now() });
+  localStorage.setItem("demo_plans", JSON.stringify(all));
+
+  setStatus("План сохранён ✅", true);
+  document.getElementById("planName").value = "";
+  document.getElementById("planBody").value = "";
+  render();
+};
+
+fillAthletes();
+render();
+</script>
+</body>
+</html>

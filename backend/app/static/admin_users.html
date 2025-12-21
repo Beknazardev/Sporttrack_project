@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Управление пользователями</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+  <style>
+    .users-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      transition: all 0.3s ease;
+      font-family: "Outfit", sans-serif;
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .filter-btn.active {
+      background: linear-gradient(135deg, #0099ff, #00d4ff);
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .user-table th {
+      text-align: left;
+      padding: 16px;
+      font-family: "Rajdhani", sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-table td {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .user-table tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .action-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+      transition: all 0.2s ease;
+      margin-right: 8px;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .action-btn.delete {
+      border-color: rgba(255, 71, 87, 0.3);
+      color: #ff4757;
+    }
+
+    .action-btn.delete:hover {
+      background: rgba(255, 71, 87, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru" data-i18n="lang_ru">Русский</option>
+      <option value="en" data-i18n="lang_en">English</option>
+      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
+    <a href="admin_page.html" class="btn-link">← Назад</a>
+    <h1 class="page-title" data-i18n="admin_user_management">Управление пользователями</h1>
+  </div>
+
+  <div class="users-filters">
+    <button class="filter-btn active" data-filter="all">Все</button>
+    <button class="filter-btn" data-filter="admin">Администраторы</button>
+    <button class="filter-btn" data-filter="coach">Тренеры</button>
+    <button class="filter-btn" data-filter="athlete">Спортсмены</button>
+  </div>
+
+  <section class="panel">
+    <div class="panel-search-row">
+      <input type="text" id="searchInput" class="input input--search" placeholder="Поиск по имени или email">
+      <button id="searchBtn" class="btn-primary">Найти</button>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Имя</th>
+            <th>Email</th>
+            <th>Роль</th>
+            <th>Дата регистрации</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr>
+            <td colspan="6" class="muted" style="text-align: center; padding: 40px;">Загрузка...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+  const API = "http://127.0.0.1:7003";
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (user.role !== "admin") window.location.href = "login.html";
+
+  let currentFilter = "all";
+  let allUsers = [];
+
+  // Filter buttons
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.getAttribute("data-filter");
+      renderUsers();
+    };
+  });
+
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API}/api/admin/users`);
+      if (res.ok) {
+        allUsers = await res.json();
+        renderUsers();
+      } else {
+        document.getElementById("usersTableBody").innerHTML = `
+          <tr><td colspan="6" class="muted" style="text-align: center; padding: 40px;">Ошибка загрузки</td></tr>
+        `;
+      }
+    } catch (e) {
+      console.error(e);
+      document.getElementById("usersTableBody").innerHTML = `
+        <tr><td colspan="6" class="muted" style="text-align: center; padding: 40px;">Ошибка загрузки</td></tr>
+      `;
+    }
+  }
+
+  function renderUsers() {
+    const filtered = currentFilter === "all" 
+      ? allUsers 
+      : allUsers.filter(u => u.role === currentFilter);
+
+    if (filtered.length === 0) {
+      document.getElementById("usersTableBody").innerHTML = `
+        <tr><td colspan="6" class="muted" style="text-align: center; padding: 40px;">Нет пользователей</td></tr>
+      `;
+      return;
+    }
+
+    document.getElementById("usersTableBody").innerHTML = filtered.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td>${u.username || "—"} ${u.last_name || ""}</td>
+        <td>${u.email || "—"}</td>
+        <td><span class="badge">${u.role || "—"}</span></td>
+        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}</td>
+        <td>
+          <button class="action-btn" onclick="editUser(${u.id})">Редактировать</button>
+          <button class="action-btn delete" onclick="deleteUser(${u.id})">Удалить</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  function editUser(userId) {
+    console.log("Edit user", userId);
+    // Implement edit functionality
+  }
+
+  function deleteUser(userId) {
+    if (confirm("Вы уверены, что хотите удалить этого пользователя?")) {
+      console.log("Delete user", userId);
+      // Implement delete functionality
+    }
+  }
+
+  loadUsers();
+</script>
+
+</body>
+</html>

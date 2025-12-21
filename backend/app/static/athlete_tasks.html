@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Задания</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+  <style>
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .task-item:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .task-checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .task-checkbox:hover {
+      border-color: #00d4ff;
+    }
+
+    .task-checkbox.checked {
+      background: #00d4ff;
+      border-color: #00d4ff;
+    }
+
+    .task-content {
+      flex: 1;
+    }
+
+    .task-title {
+      font-family: "Rajdhani", sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .task-description {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru" data-i18n="lang_ru">Русский</option>
+      <option value="en" data-i18n="lang_en">English</option>
+      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
+    <a href="athlete_page.html" class="btn-link">← Назад</a>
+    <h1 class="page-title">Задания</h1>
+  </div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="page-subtitle">Активные задачи</h2>
+    </div>
+    <div id="tasksList"></div>
+  </section>
+</main>
+
+<script>
+  const API = "http://127.0.0.1:7003";
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (user.role !== "athlete") window.location.href = "login.html";
+
+  async function loadTasks() {
+    const el = document.getElementById("tasksList");
+    el.innerHTML = `<div class="muted">Загрузка...</div>`;
+
+    try {
+      const res = await fetch(`${API}/api/tasks?athlete_id=${user.id}`);
+      if (!res.ok) {
+        el.innerHTML = `<div class="muted">Пока нет заданий</div>`;
+        return;
+      }
+      const data = await res.json().catch(() => []);
+      if (!Array.isArray(data) || data.length === 0) {
+        el.innerHTML = `<div class="muted">Пока нет заданий</div>`;
+        return;
+      }
+
+      el.innerHTML = data.map((task, index) => `
+        <div class="task-item">
+          <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${index}, ${task.id})"></div>
+          <div class="task-content">
+            <div class="task-title">${task.title || "Задача"}</div>
+            <div class="task-description">${task.description || ""}</div>
+          </div>
+          <span class="badge">${task.deadline ? new Date(task.deadline).toLocaleDateString() : ""}</span>
+        </div>
+      `).join("");
+
+    } catch (e) {
+      console.error(e);
+      el.innerHTML = `<div class="muted">Пока нет заданий</div>`;
+    }
+  }
+
+  function toggleTask(index, taskId) {
+    // Toggle task completion
+    console.log("Toggle task", taskId);
+    // API call to mark task as complete/incomplete
+  }
+
+  loadTasks();
+</script>
+
+</body>
+</html>

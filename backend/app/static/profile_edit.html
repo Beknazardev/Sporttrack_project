@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Редактирование профиля</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru" data-i18n="lang_ru">Русский</option>
+      <option value="en" data-i18n="lang_en">English</option>
+      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="profile-edit-layout">
+
+  <h1 class="page-title" data-i18n="profile_edit_title">Редактирование профиля</h1>
+
+  <div id="alertBox" class="alert"></div>
+
+  <section class="panel">
+
+    <!-- Avatar upload section -->
+    <div class="avatar-upload" id="avatarUpload">
+      <div class="avatar-preview" id="avatarPreview">
+        <span id="avatarLetter">A</span>
+      </div>
+      <div class="avatar-upload-text">
+        <strong data-i18n="profile_edit_avatar">Аватар</strong>
+        <small data-i18n="profile_edit_avatar_desc">Нажмите, чтобы загрузить новое фото</small>
+      </div>
+      <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+    </div>
+
+    <!-- Profile form -->
+    <form id="profileForm">
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="label" data-i18n="profile_edit_firstname">Имя</label>
+          <input type="text" id="firstName" class="input" required>
+        </div>
+
+        <div class="form-field">
+          <label class="label" data-i18n="profile_edit_lastname">Фамилия</label>
+          <input type="text" id="lastName" class="input">
+        </div>
+
+        <div class="form-field full-width">
+          <label class="label" data-i18n="profile_edit_email">Email</label>
+          <input type="email" id="email" class="input" disabled>
+        </div>
+
+        <div class="form-field full-width">
+          <label class="label" data-i18n="profile_edit_sport">Вид спорта</label>
+          <input type="text" id="sport" class="input">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="cancelBtn" data-i18n="profile_edit_cancel">Отмена</button>
+        <button type="submit" class="btn-primary" data-i18n="profile_edit_save">Сохранить изменения</button>
+      </div>
+    </form>
+
+    <!-- Password reset section -->
+    <div class="reset-password-section">
+      <h3 data-i18n="profile_edit_reset_password">Сбросить пароль</h3>
+      <p data-i18n="profile_edit_reset_desc">Получить ссылку для сброса пароля на email</p>
+      <button type="button" class="btn-small" id="resetPasswordBtn" data-i18n="profile_edit_reset_password">Сбросить пароль</button>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+  const API = "http://127.0.0.1:7003";
+
+  const raw = localStorage.getItem("user");
+  if (!raw) window.location.href = "login.html";
+
+  const user = JSON.parse(raw);
+  let avatarFile = null;
+
+  // Load user data
+  document.getElementById("firstName").value = user.username || "";
+  document.getElementById("lastName").value = user.last_name || "";
+  document.getElementById("email").value = user.email || "";
+  document.getElementById("sport").value = user.sport || "";
+
+  const first = (user.username || "").trim()[0];
+  document.getElementById("avatarLetter").textContent = first ? first.toUpperCase() : "U";
+
+  // Avatar upload handling
+  document.getElementById("avatarUpload").onclick = () => {
+    document.getElementById("avatarInput").click();
+  };
+
+  document.getElementById("avatarInput").onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      avatarFile = file;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const preview = document.getElementById("avatarPreview");
+        preview.innerHTML = `<img src="${event.target.result}" alt="Avatar">`;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Cancel button
+  document.getElementById("cancelBtn").onclick = () => {
+    if (user.role === "athlete") {
+      window.location.href = "athlete_page.html";
+    } else if (user.role === "coach") {
+      window.location.href = "coach_page.html";
+    } else if (user.role === "admin") {
+      window.location.href = "admin_page.html";
+    } else {
+      window.location.href = "landing.html";
+    }
+  };
+
+  // Form submission
+  document.getElementById("profileForm").onsubmit = async (e) => {
+    e.preventDefault();
+
+    const alertBox = document.getElementById("alertBox");
+    alertBox.style.display = "none";
+
+    const formData = new FormData();
+    formData.append("user_id", user.id);
+    formData.append("username", document.getElementById("firstName").value);
+    formData.append("last_name", document.getElementById("lastName").value);
+    formData.append("sport", document.getElementById("sport").value);
+
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+
+    try {
+      const res = await fetch(`${API}/api/profile/update`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        // Update localStorage
+        user.username = document.getElementById("firstName").value;
+        user.last_name = document.getElementById("lastName").value;
+        user.sport = document.getElementById("sport").value;
+        localStorage.setItem("user", JSON.stringify(user));
+
+        alertBox.className = "alert success";
+        alertBox.textContent = "Профиль успешно обновлен!";
+        alertBox.style.display = "block";
+
+        setTimeout(() => {
+          if (user.role === "athlete") {
+            window.location.href = "athlete_page.html";
+          } else if (user.role === "coach") {
+            window.location.href = "coach_page.html";
+          } else if (user.role === "admin") {
+            window.location.href = "admin_page.html";
+          }
+        }, 1500);
+      } else {
+        throw new Error("Update failed");
+      }
+    } catch (error) {
+      console.error(error);
+      alertBox.className = "alert error";
+      alertBox.textContent = "Ошибка при обновлении профиля";
+      alertBox.style.display = "block";
+    }
+  };
+
+  // Password reset button
+  document.getElementById("resetPasswordBtn").onclick = () => {
+    window.location.href = "reset_password.html";
+  };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Вход</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+
+<body>
+  <div class="auth-container">
+    <div class="auth-logo">SPORTTRACK</div>
+
+    <div class="auth-card">
+      <h1 class="auth-title">Вход</h1>
+      <p class="auth-subtitle">Войдите в свой аккаунт</p>
+
+      <div class="form-group">
+        <label class="form-label">Почта</label>
+        <input type="email" id="email" class="form-input" placeholder="example@mail.com" autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input type="password" id="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <button id="loginBtn" class="btn-auth">Войти</button>
+      <p id="loginError" class="error-text"></p>
+
+      <div class="auth-links">
+        <a href="reset_password.html" class="auth-link">Забыли пароль?</a>
+        <a href="register.html" class="auth-link">Нет аккаунта?</a>
+      </div>
+
+      <select id="langSelect" class="lang-select-auth">
+        <option value="ru">Русский</option>
+        <option value="kz">Қазақ</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </div>
+
+  <script src="lang.js"></script>
+  <script>
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginError = document.getElementById("loginError");
+
+    function showError(text){
+      loginError.textContent = text;
+      loginError.style.display = "block";
+    }
+    function hideError(){
+      loginError.textContent = "";
+      loginError.style.display = "none";
+    }
+
+    function roleRedirect(role){
+      const r = (role || "").toLowerCase();
+      if (r === "admin") window.location.href = "/static/admin_page.html";
+      else if (r === "coach") window.location.href = "/static/coach_page.html";
+      else window.location.href = "/static/athlete_page.html";
+    }
+
+    async function postJSON(url, body){
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch {}
+
+      if (!res.ok) throw new Error(data.detail || data.message || ("HTTP " + res.status));
+      return data;
+    }
+
+    async function doLogin(){
+      hideError();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value; // не trim
+
+      if (!email || !password) return showError("Введите email и пароль");
+
+      loginBtn.disabled = true;
+      try {
+        const user = await postJSON("/api/login", { email, password });
+        localStorage.setItem("user", JSON.stringify(user));
+        roleRedirect(user.role);
+      } catch (e) {
+        showError(e.message || "Ошибка входа");
+      } finally {
+        loginBtn.disabled = false;
+      }
+    }
+
+    loginBtn.addEventListener("click", doLogin);
+    [emailInput, passwordInput].forEach(el => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
+      });
+    });
+
+    hideError();
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Уведомления</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo">SportTrack</div>
+  <button class="btn-link" onclick="history.back()">← Назад</button>
+</header>
+
+<main class="page">
+  <h1 class="page-title">Уведомления</h1>
+  <div class="panel">
+    <div id="list" class="list"></div>
+  </div>
+</main>
+
+<script>
+const API = "http://127.0.0.1:7003";
+
+const me = JSON.parse(localStorage.getItem("user") || "null");
+if (!me || me.role !== "athlete") location.href = "login.html";
+
+const listEl = document.getElementById("list");
+
+async function loadNotifs(){
+  const res = await fetch(`${API}/api/notifications?user_id=${me.id}&limit=50`);
+  return res.ok ? await res.json() : [];
+}
+
+async function accept(n){
+  const res = await fetch(`${API}/api/coach/request/accept`, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      coach_id: n.from_user_id,
+      athlete_id: me.id,
+      notification_id: n.id
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    alert(err.detail || "Ошибка принятия");
+    return;
+  }
+  render();
+}
+
+async function decline(n){
+  const res = await fetch(`${API}/api/coach/request/decline`, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      coach_id: n.from_user_id,
+      athlete_id: me.id,
+      notification_id: n.id
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    alert(err.detail || "Ошибка отклонения");
+    return;
+  }
+  render();
+}
+
+async function markRead(nid){
+  await fetch(`${API}/api/notifications/${nid}/read?user_id=${me.id}`, { method: "POST" });
+}
+
+function badge(status){
+  if (status === "unread") return `<span class="badge warn">new</span>`;
+  if (status === "accepted") return `<span class="badge success">accepted</span>`;
+  if (status === "declined") return `<span class="badge">declined</span>`;
+  return `<span class="badge">read</span>`;
+}
+
+async function getCoachInfo(coachId) {
+  try {
+    const res = await fetch(`${API}/api/users/${coachId}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function render(){
+  const notifs = await loadNotifs();
+
+  const coachesMap = new Map();
+  for (const n of notifs) {
+    if (n.from_user_id && !coachesMap.has(n.from_user_id)) {
+      const coachInfo = await getCoachInfo(n.from_user_id);
+      if (coachInfo) coachesMap.set(n.from_user_id, coachInfo);
+    }
+  }
+
+  listEl.innerHTML = notifs.length ? notifs.map(n => {
+    const coach = n.from_user_id ? coachesMap.get(n.from_user_id) : null;
+    const coachDisplay = coach 
+      ? `<div class="list-sub notif-coach-info">
+           <strong>Тренер:</strong> ${coach.first_name || ''} ${coach.last_name || ''} (ID: ${coach.id})
+         </div>`
+      : '';
+    
+    return `
+    <div class="list-item">
+      <div>
+        <div class="list-title">${n.title} ${badge(n.status)}</div>
+        <div class="list-sub">${n.message}</div>
+        ${coachDisplay}
+      </div>
+
+      ${
+        n.type === "coach_request" && (n.status === "unread" || n.status === "read")
+          ? `<div>
+               <button class="btn-primary btn-small" onclick='accept(${JSON.stringify(n)})'>Принять</button>
+               <button class="btn-link" onclick='decline(${JSON.stringify(n)})'>Отклонить</button>
+             </div>`
+          : `<div class="notif-timestamp">
+               <div class="muted">${n.created_at || ""}</div>
+             </div>`
+      }
+    </div>
+  `}).join("") : `<div class="muted">Пока пусто</div>`;
+
+}
+
+render();
+</script>
+</body>
+</html>

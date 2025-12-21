@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Настройки</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+  <style>
+    .settings-section {
+      margin-bottom: 32px;
+    }
+
+    .settings-section h2 {
+      font-family: "Rajdhani", sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 16px;
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .setting-item:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    }
+
+    .setting-info h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .setting-info p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 54px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .toggle-switch.active {
+      background: #00d4ff;
+      border-color: #00d4ff;
+    }
+
+    .toggle-switch::after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: #ffffff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .toggle-switch.active::after {
+      left: 28px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru" data-i18n="lang_ru">Русский</option>
+      <option value="en" data-i18n="lang_en">English</option>
+      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
+    <a href="admin_page.html" class="btn-link">← Назад</a>
+    <h1 class="page-title" data-i18n="admin_system_settings">Системные настройки</h1>
+  </div>
+
+  <section class="panel">
+    <div class="settings-section">
+      <h2>Общие настройки</h2>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Регистрация новых пользователей</h3>
+          <p>Разрешить регистрацию новых пользователей</p>
+        </div>
+        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Email уведомления</h3>
+          <p>Отправлять уведомления на email</p>
+        </div>
+        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Модерация</h3>
+          <p>Требовать модерацию для новых публикаций</p>
+        </div>
+        <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Безопасность</h2>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Двухфакторная аутентификация</h3>
+          <p>Требовать 2FA для всех пользователей</p>
+        </div>
+        <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Логирование</h3>
+          <p>Записывать все действия пользователей</p>
+        </div>
+        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" style="margin-top: 24px;">Сохранить настройки</button>
+  </section>
+</main>
+
+<script>
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (user.role !== "admin") window.location.href = "login.html";
+
+  function toggleSetting(element) {
+    element.classList.toggle("active");
+  }
+</script>
+
+</body>
+</html>

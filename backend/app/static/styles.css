@@ -1,0 +1,1135 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap");
+
+/* ========== CSS CUSTOM PROPERTIES (DESIGN TOKENS) ========== */
+:root {
+  /* Primary Brand Colors */
+  --color-primary: #00d4ff;
+  --color-primary-dark: #0099ff;
+  --color-primary-darker: #0066ff;
+
+  /* Background Colors */
+  --color-bg-gradient-start: #0a0e27;
+  --color-bg-gradient-mid: #1a1f3a;
+  --color-bg-gradient-end: #0f1419;
+  --color-bg-overlay-light: rgba(255, 255, 255, 0.08);
+  --color-bg-overlay-lighter: rgba(255, 255, 255, 0.04);
+  --color-bg-overlay-medium: rgba(255, 255, 255, 0.1);
+  --color-bg-input: rgba(255, 255, 255, 0.05);
+  --color-bg-input-focus: rgba(255, 255, 255, 0.08);
+
+  /* Text Colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.9);
+  --color-text-muted: rgba(255, 255, 255, 0.7);
+  --color-text-disabled: rgba(255, 255, 255, 0.6);
+  --color-text-placeholder: rgba(255, 255, 255, 0.4);
+  --color-text-link: #00d4ff;
+  --color-text-link-hover: #00ffff;
+
+  /* Border Colors */
+  --color-border-light: rgba(255, 255, 255, 0.1);
+  --color-border-medium: rgba(255, 255, 255, 0.15);
+  --color-border-strong: rgba(255, 255, 255, 0.2);
+  --color-border-focus: #00d4ff;
+
+  /* Status Colors */
+  --color-success: #00ff88;
+  --color-success-bg: rgba(0, 255, 136, 0.15);
+  --color-success-border: rgba(0, 255, 136, 0.3);
+
+  --color-warning: #ffc107;
+  --color-warning-bg: rgba(255, 193, 7, 0.15);
+  --color-warning-border: rgba(255, 193, 7, 0.3);
+
+  --color-error: #ff4757;
+  --color-error-alt: #ff4d6a;
+  --color-error-bg: rgba(255, 71, 87, 0.15);
+  --color-error-border: rgba(255, 71, 87, 0.3);
+
+  /* Special Role Colors */
+  --color-coach-gradient-start: #ff6b00;
+  --color-coach-gradient-end: #ff9500;
+  --color-admin-gradient-start: #ff6b6b;
+  --color-admin-gradient-end: #ee5a24;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  --gradient-primary-reverse: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-dark) 50%,
+    var(--color-primary-darker) 100%
+  );
+  --gradient-bg: linear-gradient(
+    135deg,
+    var(--color-bg-gradient-start) 0%,
+    var(--color-bg-gradient-mid) 50%,
+    var(--color-bg-gradient-end) 100%
+  );
+  --gradient-overlay: linear-gradient(135deg, var(--color-bg-overlay-light) 0%, var(--color-bg-overlay-lighter) 100%);
+  --gradient-coach: linear-gradient(135deg, var(--color-coach-gradient-start) 0%, var(--color-coach-gradient-end) 100%);
+  --gradient-admin: linear-gradient(135deg, var(--color-admin-gradient-start) 0%, var(--color-admin-gradient-end) 100%);
+
+  /* Shadows */
+  --shadow-primary: 0 8px 32px rgba(0, 153, 255, 0.4);
+  --shadow-primary-hover: 0 12px 40px rgba(0, 153, 255, 0.6);
+  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --shadow-large: 0 24px 80px rgba(0, 0, 0, 0.6);
+
+  /* Info Colors */
+  --color-info-bg: rgba(0, 212, 255, 0.1);
+  --color-info-border: rgba(0, 212, 255, 0.3);
+  --color-info-text: #00d4ff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--gradient-bg);
+  background-attachment: fixed;
+  min-height: 100vh;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+/* ========== TOP BAR ========== */
+
+.top-bar {
+  width: 100%;
+  height: 80px;
+  background: rgba(10, 14, 39, 0.95);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid var(--color-border-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.top-bar__logo {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: var(--gradient-primary-reverse);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.top-bar__lang {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lang-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  padding: 10px 38px 10px 14px;
+  border-radius: 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--color-bg-input);
+  color: var(--color-text-secondary);
+
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+
+  outline: none;
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.lang-select:hover {
+  transform: translateY(-1px);
+  border-color: rgba(90, 200, 250, 0.55);
+  background: var(--color-bg-input-focus);
+}
+
+.lang-select:focus {
+  border-color: rgba(90, 200, 250, 0.75);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 0 0 4px rgba(90, 200, 250, 0.15);
+}
+
+.lang-select {
+  background-image: linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.75) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.75) 50%, transparent 50%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18));
+  background-position: calc(100% - 18px) 52%, calc(100% - 12px) 52%, calc(100% - 34px) 50%;
+  background-size: 6px 6px, 6px 6px, 1px 18px;
+  background-repeat: no-repeat;
+}
+
+.lang-select option {
+  color: #111;
+}
+
+/* ========== MAIN CONTAINER ========== */
+
+.page {
+  max-width: 1200px;
+  margin: 40px auto 60px;
+  padding: 0 5%;
+}
+
+.page-inner {
+  max-width: 1400px;
+  margin: 40px auto 60px;
+  padding: 0 5%;
+}
+
+.page-title {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+/* ========== PANELS ========== */
+
+.panel {
+  background: var(--gradient-overlay);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-light);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 24px;
+}
+
+.panel--wide {
+  width: 100%;
+}
+
+.panel-header {
+  margin-bottom: 24px;
+}
+
+.panel-search-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* ========== INPUTS ========== */
+
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-input);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-family: "Outfit", sans-serif;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.input:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+  background: var(--color-bg-input-focus);
+}
+
+.input--search {
+  max-width: 400px;
+}
+
+textarea.input {
+  resize: vertical;
+  font-family: "Outfit", sans-serif;
+  min-height: 120px;
+}
+
+select.input {
+  cursor: pointer;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  margin-top: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ========== BUTTONS ========== */
+
+.btn-primary {
+  font-family: "Rajdhani", sans-serif;
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--gradient-primary);
+  color: var(--color-text-primary);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary-hover);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-link {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-link);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  font-family: "Outfit", sans-serif;
+}
+
+.btn-link:hover {
+  color: var(--color-text-link-hover);
+  text-decoration: underline;
+}
+
+.btn-small {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--gradient-primary);
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+  font-family: "Rajdhani", sans-serif;
+}
+
+.btn-small:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 153, 255, 0.5);
+}
+
+.btn-small-outline {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+  font-family: "Outfit", sans-serif;
+}
+
+.btn-small-outline:hover {
+  background: var(--color-bg-overlay-medium);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-cancel {
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: all 0.3s ease;
+  font-family: "Outfit", sans-serif;
+}
+
+.btn-cancel:hover {
+  background: var(--color-bg-overlay-medium);
+  border-color: var(--color-border-strong);
+}
+
+.btn-full-width {
+  width: 100%;
+}
+
+/* ========== LISTS ========== */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: var(--gradient-overlay);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  gap: 16px;
+}
+
+.list-item:hover {
+  background: linear-gradient(135deg, var(--color-bg-overlay-medium) 0%, var(--color-bg-overlay-lighter) 100%);
+  border-color: var(--color-info-border);
+  transform: translateX(4px);
+}
+
+.list-title {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.list-sub {
+  font-size: 13px;
+  color: var(--color-text-disabled);
+}
+
+/* ========== BADGES ========== */
+
+.badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--color-bg-overlay-medium);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--color-border-strong);
+}
+
+.badge.success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border-color: var(--color-success-border);
+}
+
+.badge.warn {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-color: var(--color-warning-border);
+}
+
+.badge.error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border-color: var(--color-error-border);
+}
+
+/* ========== UTILITIES ========== */
+
+.muted {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.status {
+  font-size: 14px;
+  padding: 8px 0;
+  font-weight: 600;
+}
+
+.status.success {
+  color: var(--color-success);
+}
+
+.status.error {
+  color: var(--color-error);
+}
+
+.info-card {
+  background: linear-gradient(135deg, rgba(0, 153, 255, 0.12) 0%, rgba(0, 212, 255, 0.06) 100%);
+  border: 1px solid var(--color-info-border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.info-card > div {
+  display: flex;
+  gap: 8px;
+}
+
+.info-card b {
+  font-weight: 700;
+  color: var(--color-text-disabled);
+  min-width: 120px;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.search-hint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search-hint b {
+  color: var(--color-info-text);
+  font-weight: 600;
+}
+
+/* ========== COACH LAYOUT ========== */
+
+.coach-layout {
+  width: 90%;
+  max-width: 1400px;
+  margin: 40px auto 60px;
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.coach-card__top {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.coach-avatar {
+  width: 86px;
+  height: 86px;
+  min-width: 86px;
+  min-height: 86px;
+  max-width: 86px;
+  max-height: 86px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--gradient-primary);
+  box-shadow: 0 12px 40px rgba(0, 153, 255, 0.5);
+  position: relative;
+}
+
+.coach-avatar::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  z-index: -1;
+  opacity: 0.5;
+  filter: blur(10px);
+}
+
+.coach-avatar__text {
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 900;
+  font-size: 36px;
+  color: var(--color-text-primary);
+}
+
+.coach-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coach-name {
+  margin: 0;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: 0.5px;
+}
+
+.coach-status {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.coach-card__extra {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.coach-info-row {
+  display: flex;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.coach-label {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.coach-right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.coach-right-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.coach-welcome {
+  margin: 0;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.coach-menu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.coach-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 24px;
+  border-radius: 20px;
+  text-decoration: none;
+  background: var(--gradient-overlay);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-card);
+  color: var(--color-text-primary);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.coach-menu__item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.coach-menu__item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 50px rgba(0, 153, 255, 0.3);
+  border-color: var(--color-info-border);
+}
+
+.coach-menu__item:hover::before {
+  transform: scaleX(1);
+}
+
+.coach-menu__icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(0, 153, 255, 0.2) 0%, rgba(0, 212, 255, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.coach-menu__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.coach-menu__title {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.coach-menu__sub {
+  font-size: 13px;
+  color: var(--color-text-disabled);
+}
+
+.coach-summary {
+  grid-column: 1 / 2;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.coach-summary__item {
+  background: linear-gradient(135deg, rgba(0, 153, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-info-border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 153, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.coach-summary__item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 50px rgba(0, 153, 255, 0.3);
+}
+
+.coach-summary__item span:first-child {
+  display: block;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+}
+
+.coach-summary__item span:last-child {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ========== ATHLETE LAYOUT ========== */
+
+.athlete-sidebar {
+  width: 280px;
+  background: var(--gradient-overlay);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-light);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: var(--shadow-card);
+  position: fixed;
+  left: 5%;
+  top: 120px;
+  height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+.athlete-content {
+  margin-left: calc(280px + 5% + 40px);
+  margin-right: 5%;
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+
+.athlete-profile {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.athlete-avatar {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 900;
+  font-size: 42px;
+  box-shadow: 0 12px 40px rgba(0, 153, 255, 0.5);
+}
+
+.athlete-name {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.athlete-role {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.athlete-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.athlete-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.athlete-menu__item:hover {
+  background: var(--color-bg-overlay-medium);
+  color: var(--color-text-primary);
+  transform: translateX(4px);
+}
+
+.athlete-menu__icon {
+  font-size: 20px;
+  width: 32px;
+  text-align: center;
+}
+
+/* ========== DASHBOARD LAYOUT ========== */
+
+.coach-layout--dashboard {
+  width: 90%;
+  max-width: 1600px;
+  margin: 40px auto 60px;
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) 1fr;
+  grid-template-rows: auto;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.coach-card--dashboard {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.coach-summary--dashboard {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 0;
+}
+
+.coach-right--dashboard {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.activity-panel--dashboard {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  min-height: 400px;
+}
+
+/* ========== ROLE-SPECIFIC AVATARS ========== */
+
+.coach-avatar--coach {
+  background: var(--gradient-coach);
+  box-shadow: 0 12px 40px rgba(255, 107, 0, 0.5);
+}
+
+.coach-avatar--coach::before {
+  background: var(--gradient-coach);
+}
+
+.coach-avatar--admin {
+  background: var(--gradient-admin);
+  box-shadow: 0 12px 40px rgba(255, 107, 107, 0.5);
+}
+
+.coach-avatar--admin::before {
+  background: var(--gradient-admin);
+}
+
+/* ========== ALERTS ========== */
+
+.alert {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  display: none;
+}
+
+.alert.success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+}
+
+.alert.error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border: 1px solid var(--color-error-border);
+}
+
+.alert.info {
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+  border: 1px solid var(--color-info-border);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 1400px) {
+  .coach-layout--dashboard {
+    grid-template-columns: minmax(280px, 340px) 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .activity-panel--dashboard {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+  }
+
+  .coach-summary--dashboard {
+    grid-column: 1 / 2;
+    grid-row: 3 / 4;
+  }
+}
+
+@media (max-width: 992px) {
+  .coach-layout,
+  .coach-layout--dashboard {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .coach-card,
+  .coach-card--dashboard {
+    grid-column: 1 / -1;
+    grid-row: 1 / 2;
+  }
+
+  .coach-right,
+  .coach-right--dashboard {
+    grid-column: 1 / -1;
+    grid-row: 2 / 3;
+  }
+
+  .activity-panel,
+  .activity-panel--dashboard {
+    grid-column: 1 / -1;
+    grid-row: 3 / 4;
+  }
+
+  .coach-summary,
+  .coach-summary--dashboard {
+    grid-column: 1 / -1;
+    grid-row: 4 / 5;
+    flex-direction: row;
+  }
+
+  .coach-summary__item {
+    flex: 1;
+  }
+
+  .coach-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-welcome {
+    font-size: 32px;
+  }
+
+  .top-bar {
+    height: 70px;
+  }
+
+  .top-bar__logo {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .coach-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-welcome {
+    font-size: 28px;
+  }
+
+  .coach-right-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .panel {
+    padding: 24px;
+  }
+
+  .athlete-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    margin-bottom: 32px;
+  }
+
+  .athlete-content {
+    margin-left: 5%;
+    margin-right: 5%;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 0 4%;
+  }
+
+  .coach-summary {
+    flex-direction: column;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+
+  .list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .coach-menu__item {
+    padding: 20px 16px;
+  }
+
+  .coach-menu__icon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+}
+
+/* ========== RESET CONTAINER ========== */
+
+.reset-container {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+.back-center {
+  text-align: center;
+  margin-top: 24px;
+}
+
+/* ========== FORM ELEMENTS ========== */
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
