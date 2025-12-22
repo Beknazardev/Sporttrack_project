@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SportTrack — Админ</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SportTrack — Кабинет администратора</title>
+  <link rel="stylesheet" href="styles.css" />
   <script src="lang.js"></script>
+  <style>
+    /* чтобы карточки точно были кликабельные */
+    .coach-menu__item{ display:flex; text-decoration:none; cursor:pointer; }
+    .coach-menu__item *{ pointer-events:none; }
+    .coach-menu__item{ pointer-events:auto; }
+  </style>
 </head>
 <body>
-
 <header class="top-bar">
   <div class="top-bar__logo">SportTrack</div>
-  
   <div class="top-bar__lang">
     <select id="langSelect" class="lang-select">
       <option value="ru">Русский</option>
@@ -22,60 +26,42 @@
 </header>
 
 <main class="coach-layout coach-layout--dashboard">
-
   <!-- Left profile card -->
   <section class="panel coach-card coach-card--dashboard">
     <div class="coach-card__top">
-      <div class="coach-avatar coach-avatar--admin">
+      <div class="coach-avatar coach-avatar--coach">
         <span id="adminAvatarLetter" class="coach-avatar__text"></span>
       </div>
-
       <div class="coach-card__info">
         <h1 id="adminName" class="coach-name"></h1>
-
-        <p class="coach-status">
-          <span>Статус:</span> <strong>Администратор</strong>
-        </p>
-
-        <button id="editProfileBtn" class="btn-link">
-          Редактировать профиль
-        </button>
+        <p class="coach-status"><span>Статус:</span> <strong>администратор</strong></p>
+        <button id="editProfileBtn" class="btn-link">Редактировать профиль</button>
+      </div>
+    </div>
+    <div class="coach-card__extra">
+      <div class="coach-info-row">
+        <span class="coach-label">ID:</span>
+        <span id="adminIdValue"></span>
+      </div>
+      <div class="coach-info-row">
+        <span class="coach-label">Email:</span>
+        <span id="adminEmailValue"></span>
+      </div>
+      <div class="coach-info-row">
+        <span class="coach-label">Фамилия:</span>
+        <span id="adminLastNameValue"></span>
       </div>
     </div>
   </section>
 
-  <!-- Bottom left stats summary -->
-  <section class="coach-summary coach-summary--dashboard">
-    <div class="coach-summary__item">
-      <span id="cntUsers">0</span>
-      <span>Пользователей</span>
-    </div>
-
-    <div class="coach-summary__item">
-      <span id="cntCoaches">0</span>
-      <span>Тренеров</span>
-    </div>
-
-    <div class="coach-summary__item">
-      <span id="cntAthletes">0</span>
-      <span>Спортсменов</span>
-    </div>
-  </section>
-
-  <!-- Center main content with menu -->
   <section class="coach-right coach-right--dashboard">
     <div class="coach-right-header">
       <h2 class="coach-welcome">
-        <span>Добро пожаловать</span>,
-        <span id="adminFullName"></span>
+        <span>Добро пожаловать</span>, <span id="adminFullName"></span>
       </h2>
-
-      <button id="openChatFromAdmin" class="btn-primary">
-        💬 Чат
-      </button>
+      <button id="openChatFromAdmin" class="btn-primary">💬 <span>Чат</span></button>
     </div>
 
-    <!-- 2x2 Grid for admin menu items -->
     <section class="coach-menu">
       <a href="admin_users.html" class="coach-menu__item">
         <div class="coach-menu__icon">👥</div>
@@ -85,16 +71,16 @@
         </div>
       </a>
 
-      <a href="admin_stats.html" class="coach-menu__item">
+      <a href="admin_activity.html" class="coach-menu__item">
         <div class="coach-menu__icon">📊</div>
         <div class="coach-menu__text">
           <div class="coach-menu__title">Статистика активности</div>
-          <div class="coach-menu__sub">Отчеты и аналитика</div>
+          <div class="coach-menu__sub">Отчёты и аналитика</div>
         </div>
       </a>
 
       <a href="admin_requests.html" class="coach-menu__item">
-        <div class="coach-menu__icon">📝</div>
+        <div class="coach-menu__icon">🧾</div>
         <div class="coach-menu__text">
           <div class="coach-menu__title">Запросы</div>
           <div class="coach-menu__sub">Заявки и обращения</div>
@@ -111,6 +97,22 @@
     </section>
   </section>
 
+  <!-- Bottom left stats summary -->
+  <section class="coach-summary coach-summary--dashboard">
+    <div class="coach-summary__item">
+      <span id="cntUsers">—</span>
+      <span>Пользователей</span>
+    </div>
+    <div class="coach-summary__item">
+      <span id="cntCoaches">—</span>
+      <span>Тренеров</span>
+    </div>
+    <div class="coach-summary__item">
+      <span id="cntAthletes">—</span>
+      <span>Спортсменов</span>
+    </div>
+  </section>
+
   <!-- Right activity panel -->
   <section class="panel activity-panel activity-panel--dashboard">
     <div class="panel-header">
@@ -118,44 +120,69 @@
     </div>
     <div id="adminActivity" class="list muted">Загрузка...</div>
   </section>
-
 </main>
 
 <script>
-  const API = "http://127.0.0.1:7003";
+  const API = "";
 
   const raw = localStorage.getItem("user");
-  if (!raw) window.location.href = "login.html";
-
+  if (!raw) location.href = "login.html";
   const user = JSON.parse(raw);
-  if (user.role !== "admin") window.location.href = "login.html";
 
-  document.getElementById("adminName").textContent = user.username || "Admin";
-  document.getElementById("adminFullName").textContent = user.last_name ? `${user.username} ${user.last_name}` : (user.username || "Admin");
+  if ((user.role || "").toLowerCase() !== "admin") location.href = "login.html";
 
-  const first = (user.username || "A").trim()[0];
+  const fullName = (user.last_name ? `${user.username} ${user.last_name}` : (user.username || "")).trim();
+
+  document.getElementById("adminName").textContent = user.username || "Администратор";
+  document.getElementById("adminFullName").textContent = fullName || "Администратор";
+  document.getElementById("adminIdValue").textContent = user.id ?? "—";
+  document.getElementById("adminEmailValue").textContent = user.email ?? "—";
+  document.getElementById("adminLastNameValue").textContent = user.last_name ?? "—";
+
+  const first = (user.username || "").trim()[0];
   document.getElementById("adminAvatarLetter").textContent = first ? first.toUpperCase() : "A";
 
-  document.getElementById("editProfileBtn").onclick = () => {
-    window.location.href = "profile_edit.html";
-  };
+  document.getElementById("editProfileBtn").onclick = () => location.href = "profile_edit.html";
+  document.getElementById("openChatFromAdmin").onclick = () => location.href = "chat.html";
 
-  document.getElementById("openChatFromAdmin").onclick = () => {
-    window.location.href = "chat.html";
-  };
+  function fmtDate(d){
+    try { return new Date(d).toLocaleString(); } catch { return ""; }
+  }
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
 
-  async function loadAdminActivity() {
+  async function loadStats(){
+    try{
+      const res = await fetch(`${API}/api/admin/stats`, { headers: { "Accept":"application/json" } });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      document.getElementById("cntUsers").textContent = data.total_users ?? 0;
+      document.getElementById("cntCoaches").textContent = data.total_coaches ?? 0;
+      document.getElementById("cntAthletes").textContent = data.total_athletes ?? 0;
+    } catch(e){
+      console.error(e);
+      document.getElementById("cntUsers").textContent = "—";
+      document.getElementById("cntCoaches").textContent = "—";
+      document.getElementById("cntAthletes").textContent = "—";
+    }
+  }
+
+  async function loadAdminActivity(){
     const el = document.getElementById("adminActivity");
     el.innerHTML = `<div class="muted">Загрузка...</div>`;
 
-    try {
-      const res = await fetch(`${API}/api/activity?limit=10`);
-      if (!res.ok) {
-        el.innerHTML = `<div class="muted">Пока активности нет</div>`;
-        return;
-      }
-      const data = await res.json().catch(() => []);
-      if (!Array.isArray(data) || data.length === 0) {
+    try{
+      const res = await fetch(`${API}/api/admin/activity?admin_id=${encodeURIComponent(user.id)}&limit=6`, {
+        headers: { "Accept":"application/json" }
+      });
+      const data = await res.json().catch(()=>[]);
+      if (!res.ok || !Array.isArray(data) || data.length === 0){
         el.innerHTML = `<div class="muted">Пока активности нет</div>`;
         return;
       }
@@ -163,36 +190,24 @@
       el.innerHTML = data.map(a => `
         <div class="list-item">
           <div>
-            <div class="list-title">${a.title || "Событие"}</div>
-            <div class="list-sub">${a.message || ""}</div>
+            <div class="list-title">${esc(a.title || "Событие")}</div>
+            <div class="list-sub">${esc(a.message || "")}</div>
           </div>
-          <span class="badge">${a.created_at ? new Date(a.created_at).toLocaleString() : ""}</span>
+          <span class="badge">${a.created_at ? esc(fmtDate(a.created_at)) : ""}</span>
         </div>
       `).join("");
-
-    } catch (e) {
+    } catch(e){
       console.error(e);
       el.innerHTML = `<div class="muted">Пока активности нет</div>`;
     }
   }
 
-  async function loadStats() {
-    try {
-      const res = await fetch(`${API}/api/admin/stats`);
-      if (res.ok) {
-        const data = await res.json();
-        document.getElementById("cntUsers").textContent = data.total_users || "0";
-        document.getElementById("cntCoaches").textContent = data.total_coaches || "0";
-        document.getElementById("cntAthletes").textContent = data.total_athletes || "0";
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  loadAdminActivity();
-  loadStats();
+  (async () => {
+    await loadStats();
+    await loadAdminActivity();
+  })();
 </script>
-
 </body>
 </html>
+
+

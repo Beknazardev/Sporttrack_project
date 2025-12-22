@@ -6,12 +6,170 @@
   <title>SportTrack — Редактирование профиля</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="lang.js"></script>
+
+  <style>
+    .profile-edit-layout{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+    .profile-edit-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 18px;
+    }
+    .profile-edit-header .page-title{ margin:0; }
+
+    .profile-card{
+      padding: 22px;
+      border-radius: 18px;
+    }
+
+    .profile-top{
+      display:flex;
+      gap:18px;
+      align-items:center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 18px;
+    }
+
+    .avatar-upload{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .avatar-preview{
+      width: 84px;
+      height: 84px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: radial-gradient(circle at 35% 30%, rgba(0,212,255,.35), rgba(0,0,0,.25));
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      position: relative;
+    }
+    .avatar-preview img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .avatar-letter{
+      font-family: "Rajdhani", sans-serif;
+      font-weight: 900;
+      font-size: 34px;
+      color: rgba(255,255,255,.92);
+      text-shadow: 0 8px 22px rgba(0,0,0,.45);
+    }
+    .avatar-hint{
+      font-size: 12px;
+      color: rgba(255,255,255,.55);
+      margin-top: 2px;
+    }
+    .avatar-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      font-size: 12px;
+      color: rgba(255,255,255,.72);
+      margin-top: 6px;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .form-field{ display:flex; flex-direction:column; gap:6px; }
+    .full-width{ grid-column: 1 / -1; }
+
+    @media (max-width: 720px){
+      .profile-top{ flex-direction:column; align-items:flex-start; }
+      .form-grid{ grid-template-columns: 1fr; }
+    }
+
+    .form-actions{
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+      margin-top: 16px;
+      flex-wrap:wrap;
+    }
+
+    .btn-cancel{
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.88);
+      cursor:pointer;
+    }
+    .btn-cancel:hover{ border-color: rgba(0,212,255,.28); }
+
+    .alert{
+      display:none;
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.88);
+    }
+    .alert.success{
+      border-color: rgba(0,255,140,.25);
+      background: rgba(0,255,140,.08);
+    }
+    .alert.error{
+      border-color: rgba(255,80,80,.28);
+      background: rgba(255,80,80,.08);
+    }
+
+    .reset-password-section{
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .reset-password-section h3{
+      margin: 0 0 6px;
+      font-family: "Rajdhani", sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .reset-password-section p{
+      margin:0 0 10px;
+      color: rgba(255,255,255,.65);
+      font-size: 14px;
+    }
+
+    .btn-small{
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.9);
+      cursor:pointer;
+    }
+    .btn-small:hover{ border-color: rgba(0,212,255,.28); }
+
+  </style>
 </head>
 <body>
-
 <header class="top-bar">
   <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
-
   <div class="top-bar__lang">
     <select id="langSelect" class="lang-select">
       <option value="ru" data-i18n="lang_ru">Русский</option>
@@ -22,26 +180,28 @@
 </header>
 
 <main class="profile-edit-layout">
-
-  <h1 class="page-title" data-i18n="profile_edit_title">Редактирование профиля</h1>
+  <div class="profile-edit-header">
+    <h1 class="page-title" data-i18n="profile_edit_title">Редактирование профиля</h1>
+    <button class="btn-link" id="backBtn">← Назад</button>
+  </div>
 
   <div id="alertBox" class="alert"></div>
 
-  <section class="panel">
-
-    <!-- Avatar upload section -->
-    <div class="avatar-upload" id="avatarUpload">
-      <div class="avatar-preview" id="avatarPreview">
-        <span id="avatarLetter">A</span>
+  <section class="panel profile-card">
+    <div class="profile-top">
+      <div class="avatar-upload" id="avatarUpload" title="Нажмите, чтобы загрузить фото">
+        <div class="avatar-preview" id="avatarPreview">
+          <span class="avatar-letter" id="avatarLetter">U</span>
+        </div>
+        <div>
+          <div style="font-weight:800;" data-i18n="profile_edit_avatar">Аватар</div>
+          <div class="avatar-hint" data-i18n="profile_edit_avatar_desc">Нажмите, чтобы загрузить новое фото</div>
+          <div class="avatar-pill" id="avatarInfo">🖼️ JPG/PNG/WebP • до 5MB</div>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
       </div>
-      <div class="avatar-upload-text">
-        <strong data-i18n="profile_edit_avatar">Аватар</strong>
-        <small data-i18n="profile_edit_avatar_desc">Нажмите, чтобы загрузить новое фото</small>
-      </div>
-      <input type="file" id="avatarInput" accept="image/*" style="display: none;">
     </div>
 
-    <!-- Profile form -->
     <form id="profileForm">
       <div class="form-grid">
         <div class="form-field">
@@ -61,135 +221,138 @@
 
         <div class="form-field full-width">
           <label class="label" data-i18n="profile_edit_sport">Вид спорта</label>
-          <input type="text" id="sport" class="input">
+          <input type="text" id="sport" class="input" placeholder="Например: футбол, бокс...">
         </div>
       </div>
 
       <div class="form-actions">
         <button type="button" class="btn-cancel" id="cancelBtn" data-i18n="profile_edit_cancel">Отмена</button>
-        <button type="submit" class="btn-primary" data-i18n="profile_edit_save">Сохранить изменения</button>
+        <button type="submit" class="btn-primary" id="saveBtn" data-i18n="profile_edit_save">Сохранить изменения</button>
       </div>
     </form>
 
-    <!-- Password reset section -->
     <div class="reset-password-section">
       <h3 data-i18n="profile_edit_reset_password">Сбросить пароль</h3>
-      <p data-i18n="profile_edit_reset_desc">Получить ссылку для сброса пароля на email</p>
+      <p data-i18n="profile_edit_reset_desc">Получить ссылку/код для сброса пароля на email</p>
       <button type="button" class="btn-small" id="resetPasswordBtn" data-i18n="profile_edit_reset_password">Сбросить пароль</button>
     </div>
-
   </section>
-
 </main>
 
 <script>
-  const API = "http://127.0.0.1:7003";
+  const API = "";
 
   const raw = localStorage.getItem("user");
-  if (!raw) window.location.href = "login.html";
-
+  if (!raw) location.href = "login.html";
   const user = JSON.parse(raw);
+  const role = (user.role || "").toLowerCase();
+
   let avatarFile = null;
 
-  // Load user data
+  const alertBox = document.getElementById("alertBox");
+  const avatarPreview = document.getElementById("avatarPreview");
+  const avatarLetter = document.getElementById("avatarLetter");
+
+  function showAlert(text, ok){
+    alertBox.textContent = text;
+    alertBox.className = "alert " + (ok ? "success" : "error");
+    alertBox.style.display = "block";
+  }
+
   document.getElementById("firstName").value = user.username || "";
   document.getElementById("lastName").value = user.last_name || "";
   document.getElementById("email").value = user.email || "";
   document.getElementById("sport").value = user.sport || "";
 
-  const first = (user.username || "").trim()[0];
-  document.getElementById("avatarLetter").textContent = first ? first.toUpperCase() : "U";
+  if (user.avatar_url){
+    avatarPreview.innerHTML = `<img src="${user.avatar_url}" alt="Avatar">`;
+  } else {
+    const first = (user.username || "").trim()[0];
+    avatarLetter.textContent = first ? first.toUpperCase() : "U";
+  }
 
-  // Avatar upload handling
   document.getElementById("avatarUpload").onclick = () => {
     document.getElementById("avatarInput").click();
   };
 
   document.getElementById("avatarInput").onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      avatarFile = file;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const preview = document.getElementById("avatarPreview");
-        preview.innerHTML = `<img src="${event.target.result}" alt="Avatar">`;
-      };
-      reader.readAsDataURL(file);
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024){
+      showAlert("Файл слишком большой (макс 5MB)", false);
+      e.target.value = "";
+      return;
     }
+
+    avatarFile = file;
+    const url = URL.createObjectURL(file);
+    avatarPreview.innerHTML = `<img src="${url}" alt="Avatar">`;
+    document.getElementById("avatarInfo").textContent = "✅ Выбрано: " + file.name;
   };
 
-  // Cancel button
-  document.getElementById("cancelBtn").onclick = () => {
-    if (user.role === "athlete") {
-      window.location.href = "athlete_page.html";
-    } else if (user.role === "coach") {
-      window.location.href = "coach_page.html";
-    } else if (user.role === "admin") {
-      window.location.href = "admin_page.html";
-    } else {
-      window.location.href = "landing.html";
-    }
-  };
+  function goBack(){
+    if (role === "athlete") location.href = "athlete_page.html";
+    else if (role === "coach") location.href = "coach_page.html";
+    else if (role === "admin") location.href = "admin_page.html";
+    else location.href = "landing.html";
+  }
 
-  // Form submission
+  document.getElementById("backBtn").onclick = goBack;
+  document.getElementById("cancelBtn").onclick = goBack;
+
   document.getElementById("profileForm").onsubmit = async (e) => {
     e.preventDefault();
-
-    const alertBox = document.getElementById("alertBox");
     alertBox.style.display = "none";
 
-    const formData = new FormData();
-    formData.append("user_id", user.id);
-    formData.append("username", document.getElementById("firstName").value);
-    formData.append("last_name", document.getElementById("lastName").value);
-    formData.append("sport", document.getElementById("sport").value);
+    const fd = new FormData();
+    fd.append("user_id", String(user.id));
+    fd.append("username", document.getElementById("firstName").value.trim());
+    fd.append("last_name", document.getElementById("lastName").value.trim());
+    fd.append("sport", document.getElementById("sport").value.trim());
+    if (avatarFile) fd.append("avatar", avatarFile);
 
-    if (avatarFile) {
-      formData.append("avatar", avatarFile);
-    }
+    const saveBtn = document.getElementById("saveBtn");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Сохранение...";
 
-    try {
-      const res = await fetch(`${API}/api/profile/update`, {
-        method: "POST",
-        body: formData,
-      });
+    try{
+      const res = await fetch(`${API}/api/profile/update`, { method:"POST", body: fd });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) throw new Error(data.detail || ("HTTP " + res.status));
 
-      if (res.ok) {
-        // Update localStorage
-        user.username = document.getElementById("firstName").value;
-        user.last_name = document.getElementById("lastName").value;
-        user.sport = document.getElementById("sport").value;
-        localStorage.setItem("user", JSON.stringify(user));
+      user.username = data.username ?? user.username;
+      user.last_name = data.last_name ?? user.last_name;
+      user.sport = data.sport ?? user.sport;
+      user.avatar_url = data.avatar_url ?? user.avatar_url;
+      localStorage.setItem("user", JSON.stringify(user));
 
-        alertBox.className = "alert success";
-        alertBox.textContent = "Профиль успешно обновлен!";
-        alertBox.style.display = "block";
-
-        setTimeout(() => {
-          if (user.role === "athlete") {
-            window.location.href = "athlete_page.html";
-          } else if (user.role === "coach") {
-            window.location.href = "coach_page.html";
-          } else if (user.role === "admin") {
-            window.location.href = "admin_page.html";
-          }
-        }, 1500);
-      } else {
-        throw new Error("Update failed");
-      }
-    } catch (error) {
-      console.error(error);
-      alertBox.className = "alert error";
-      alertBox.textContent = "Ошибка при обновлении профиля";
-      alertBox.style.display = "block";
+      showAlert("Профиль обновлён ✅", true);
+      setTimeout(goBack, 900);
+    } catch(err){
+      console.error(err);
+      showAlert(err.message || "Ошибка при обновлении профиля", false);
+    } finally{
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Сохранить изменения";
     }
   };
 
-  // Password reset button
-  document.getElementById("resetPasswordBtn").onclick = () => {
-    window.location.href = "reset_password.html";
+  document.getElementById("resetPasswordBtn").onclick = async () => {
+    try{
+      const res = await fetch(`${API}/api/password/reset-request`, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email: user.email })
+      });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) throw new Error(data.detail || ("HTTP " + res.status));
+      showAlert("Код для сброса отправлен на email ✅", true);
+    } catch(e){
+      console.error(e);
+      showAlert("Не удалось отправить код сброса", false);
+    }
   };
 </script>
-
 </body>
 </html>

@@ -1,13 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap");
 
-/* ========== CSS CUSTOM PROPERTIES (DESIGN TOKENS) ========== */
 :root {
-  /* Primary Brand Colors */
   --color-primary: #00d4ff;
   --color-primary-dark: #0099ff;
   --color-primary-darker: #0066ff;
 
-  /* Background Colors */
   --color-bg-gradient-start: #0a0e27;
   --color-bg-gradient-mid: #1a1f3a;
   --color-bg-gradient-end: #0f1419;
@@ -17,7 +14,6 @@
   --color-bg-input: rgba(255, 255, 255, 0.05);
   --color-bg-input-focus: rgba(255, 255, 255, 0.08);
 
-  /* Text Colors */
   --color-text-primary: #ffffff;
   --color-text-secondary: rgba(255, 255, 255, 0.9);
   --color-text-muted: rgba(255, 255, 255, 0.7);
@@ -26,13 +22,11 @@
   --color-text-link: #00d4ff;
   --color-text-link-hover: #00ffff;
 
-  /* Border Colors */
   --color-border-light: rgba(255, 255, 255, 0.1);
   --color-border-medium: rgba(255, 255, 255, 0.15);
   --color-border-strong: rgba(255, 255, 255, 0.2);
   --color-border-focus: #00d4ff;
 
-  /* Status Colors */
   --color-success: #00ff88;
   --color-success-bg: rgba(0, 255, 136, 0.15);
   --color-success-border: rgba(0, 255, 136, 0.3);
@@ -46,13 +40,11 @@
   --color-error-bg: rgba(255, 71, 87, 0.15);
   --color-error-border: rgba(255, 71, 87, 0.3);
 
-  /* Special Role Colors */
   --color-coach-gradient-start: #ff6b00;
   --color-coach-gradient-end: #ff9500;
   --color-admin-gradient-start: #ff6b6b;
   --color-admin-gradient-end: #ee5a24;
 
-  /* Gradients */
   --gradient-primary: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
   --gradient-primary-reverse: linear-gradient(
     135deg,
@@ -70,13 +62,11 @@
   --gradient-coach: linear-gradient(135deg, var(--color-coach-gradient-start) 0%, var(--color-coach-gradient-end) 100%);
   --gradient-admin: linear-gradient(135deg, var(--color-admin-gradient-start) 0%, var(--color-admin-gradient-end) 100%);
 
-  /* Shadows */
   --shadow-primary: 0 8px 32px rgba(0, 153, 255, 0.4);
   --shadow-primary-hover: 0 12px 40px rgba(0, 153, 255, 0.6);
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.4);
   --shadow-large: 0 24px 80px rgba(0, 0, 0, 0.6);
 
-  /* Info Colors */
   --color-info-bg: rgba(0, 212, 255, 0.1);
   --color-info-border: rgba(0, 212, 255, 0.3);
   --color-info-text: #00d4ff;
@@ -98,7 +88,6 @@ body {
   color: var(--color-text-primary);
 }
 
-/* ========== TOP BAR ========== */
 
 .top-bar {
   width: 100%;
@@ -183,7 +172,6 @@ body {
   color: #111;
 }
 
-/* ========== MAIN CONTAINER ========== */
 
 .page {
   max-width: 1200px;
@@ -213,7 +201,6 @@ body {
   margin-bottom: 8px;
 }
 
-/* ========== PANELS ========== */
 
 .panel {
   background: var(--gradient-overlay);
@@ -239,7 +226,6 @@ body {
   margin-bottom: 12px;
 }
 
-/* ========== INPUTS ========== */
 
 .input {
   width: 100%;
@@ -289,7 +275,6 @@ select.input {
   letter-spacing: 0.5px;
 }
 
-/* ========== BUTTONS ========== */
 
 .btn-primary {
   font-family: "Rajdhani", sans-serif;
@@ -394,7 +379,6 @@ select.input {
   width: 100%;
 }
 
-/* ========== LISTS ========== */
 
 .list {
   display: flex;
@@ -437,7 +421,6 @@ select.input {
   color: var(--color-text-disabled);
 }
 
-/* ========== BADGES ========== */
 
 .badge {
   display: inline-block;
@@ -470,7 +453,6 @@ select.input {
   border-color: var(--color-error-border);
 }
 
-/* ========== UTILITIES ========== */
 
 .muted {
   color: rgba(255, 255, 255, 0.5);
@@ -536,7 +518,6 @@ select.input {
   font-weight: 600;
 }
 
-/* ========== COACH LAYOUT ========== */
 
 .coach-layout {
   width: 90%;
@@ -786,7 +767,6 @@ select.input {
   letter-spacing: 1px;
 }
 
-/* ========== ATHLETE LAYOUT ========== */
 
 .athlete-sidebar {
   width: 280px;
@@ -879,7 +859,6 @@ select.input {
   text-align: center;
 }
 
-/* ========== DASHBOARD LAYOUT ========== */
 
 .coach-layout--dashboard {
   width: 90%;
@@ -920,7 +899,6 @@ select.input {
   min-height: 400px;
 }
 
-/* ========== ROLE-SPECIFIC AVATARS ========== */
 
 .coach-avatar--coach {
   background: var(--gradient-coach);
@@ -940,7 +918,6 @@ select.input {
   background: var(--gradient-admin);
 }
 
-/* ========== ALERTS ========== */
 
 .alert {
   padding: 16px 20px;
@@ -1102,7 +1079,6 @@ select.input {
   }
 }
 
-/* ========== RESET CONTAINER ========== */
 
 .reset-container {
   max-width: 600px;
@@ -1115,7 +1091,6 @@ select.input {
   margin-top: 24px;
 }
 
-/* ========== FORM ELEMENTS ========== */
 
 .form-group {
   margin-bottom: 20px;
@@ -1132,4 +1107,33 @@ select.input {
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+
+.admin-layout {
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.admin-left,
+.admin-center,
+.admin-right {
+  align-self: flex-start;
+}
+
+
+.admin-left {
+  margin-top: 0;
+}
+
+.clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: transform .12s ease, filter .12s ease;
+}
+.clickable:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+.clickable:active {
+  transform: translateY(0);
 }

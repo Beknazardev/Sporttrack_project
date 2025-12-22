@@ -2,10 +2,14 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SportTrack — Статистика</title>
+
   <link rel="stylesheet" href="styles.css" />
   <script src="lang.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     .stats-grid {
       display: grid;
@@ -29,11 +33,7 @@
       box-shadow: 0 16px 50px rgba(0, 153, 255, 0.3);
     }
 
-    .stat-card__icon {
-      font-size: 42px;
-      margin-bottom: 12px;
-    }
-
+    .stat-card__icon { font-size: 42px; margin-bottom: 12px; }
     .stat-card__value {
       font-family: "Rajdhani", sans-serif;
       font-size: 48px;
@@ -41,7 +41,6 @@
       color: #00d4ff;
       margin-bottom: 8px;
     }
-
     .stat-card__label {
       font-size: 14px;
       font-weight: 600;
@@ -56,7 +55,6 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 24px;
       padding: 32px;
-      min-height: 400px;
       margin-bottom: 24px;
     }
 
@@ -65,15 +63,34 @@
       font-size: 24px;
       font-weight: 700;
       color: #ffffff;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 320px;
+    }
+
+    .error-box {
+      margin-top: 10px;
+      margin-bottom: 18px;
+      color: #ff4d6a;
+      font-weight: 600;
+      display: none;
+    }
+
+    .muted-hint {
+      color: rgba(255,255,255,0.55);
+      font-size: 13px;
+      margin-top: -6px;
+      margin-bottom: 18px;
     }
   </style>
 </head>
-<body>
 
+<body>
 <header class="top-bar">
   <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
-
   <div class="top-bar__lang">
     <select id="langSelect" class="lang-select">
       <option value="ru" data-i18n="lang_ru">Русский</option>
@@ -84,10 +101,11 @@
 </header>
 
 <main class="page">
-  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
-    <a href="admin_page.html" class="btn-link">← Назад</a>
+  <div style="display:flex; align-items:center; gap:16px; margin-bottom: 18px;">
+    <a href="/static/admin_page.html" class="btn-link">← Назад</a>
     <h1 class="page-title" data-i18n="admin_stats">Статистика активности</h1>
   </div>
+  <div class="muted-hint">Данные берутся из <code>/api/admin/activity-stats</code></div>
 
   <div class="stats-grid">
     <div class="stat-card">
@@ -103,7 +121,7 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-card__icon">👨‍🏫</div>
+      <div class="stat-card__icon">📈</div>
       <div class="stat-card__value" id="totalCoaches">0</div>
       <div class="stat-card__label">Тренеров</div>
     </div>
@@ -115,43 +133,127 @@
     </div>
   </div>
 
+  <p id="statsError" class="error-box"></p>
+
   <div class="chart-section">
     <h2 class="chart-title">Активность пользователей</h2>
-    <div style="display: flex; align-items: center; justify-content: center; min-height: 300px; color: rgba(255, 255, 255, 0.5);">
-      График активности будет отображаться здесь
+    <div class="chart-wrap">
+      <canvas id="activityChart"></canvas>
     </div>
   </div>
 
   <div class="chart-section">
     <h2 class="chart-title">Регистрации по месяцам</h2>
-    <div style="display: flex; align-items: center; justify-content: center; min-height: 300px; color: rgba(255, 255, 255, 0.5);">
-      График регистраций будет отображаться здесь
+    <div class="chart-wrap">
+      <canvas id="regsChart"></canvas>
     </div>
   </div>
 </main>
 
 <script>
-  const API = "http://127.0.0.1:7003";
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  if (user.role !== "admin") window.location.href = "login.html";
+  if ((user.role || "").toLowerCase() !== "admin") {
+    window.location.href = "/static/login.html";
+  }
 
-  async function loadStats() {
-    try {
-      const res = await fetch(`${API}/api/admin/stats`);
-      if (res.ok) {
-        const data = await res.json();
-        document.getElementById("totalUsers").textContent = data.total_users || "0";
-        document.getElementById("totalAthletes").textContent = data.total_athletes || "0";
-        document.getElementById("totalCoaches").textContent = data.total_coaches || "0";
-        document.getElementById("totalWorkouts").textContent = data.total_workouts || "0";
+  let activityChart = null;
+  let regsChart = null;
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (value ?? 0);
+  }
+
+  function showErr(msg) {
+    const box = document.getElementById("statsError");
+    box.textContent = msg;
+    box.style.display = "block";
+  }
+
+  async function getStats() {
+    const res = await fetch(`/api/admin/activity-stats?admin_id=${encodeURIComponent(user.id)}`);
+    let data = {};
+    try { data = await res.json(); } catch {}
+    if (!res.ok) throw new Error(data.detail || ("HTTP " + res.status));
+    return data;
+  }
+
+  function renderActivity(points) {
+    const labels = (points || []).map(p => p.date);
+    const values = (points || []).map(p => p.count);
+
+    const ctx = document.getElementById("activityChart").getContext("2d");
+    if (activityChart) activityChart.destroy();
+
+    activityChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Активность",
+          data: values,
+          tension: 0.35,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
       }
+    });
+  }
+
+  function renderRegs(points) {
+    const labels = (points || []).map(p => p.month);
+    const values = (points || []).map(p => p.count);
+
+    const ctx = document.getElementById("regsChart").getContext("2d");
+    if (regsChart) regsChart.destroy();
+
+    regsChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Регистрации",
+          data: values,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+
+  async function init() {
+    try {
+      const data = await getStats();
+
+      setText("totalUsers", data?.cards?.total_users ?? 0);
+      setText("totalAthletes", data?.cards?.athletes ?? 0);
+      setText("totalCoaches", data?.cards?.coaches ?? 0);
+      setText("totalWorkouts", data?.cards?.trainings ?? 0);
+
+      renderActivity(Array.isArray(data.activity) ? data.activity : []);
+      renderRegs(Array.isArray(data.registrations) ? data.registrations : []);
+
     } catch (e) {
       console.error(e);
+      showErr("Не удалось загрузить статистику: " + (e.message || "ошибка"));
     }
   }
 
-  loadStats();
+  init();
 </script>
-
 </body>
 </html>

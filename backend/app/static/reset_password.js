@@ -1,7 +1,7 @@
 const BASE = "http://127.0.0.1:8000";
 
-const RESET_REQ_URL = `${BASE}/api/password/reset-request`;
-const RESET_CONFIRM_URL = `${BASE}/api/password/reset-confirm`;
+const RESET_REQ_URL = "/api/password/reset-request";
+const RESET_CONFIRM_URL = "/api/password/reset-confirm";
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("reset_password.js загружен");

@@ -4,8 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SportTrack — Прогресс</title>
+
   <link rel="stylesheet" href="styles.css" />
   <script src="lang.js"></script>
+
   <style>
     .progress-grid {
       display: grid;
@@ -15,9 +17,9 @@
     }
 
     .stat-card {
-      background: linear-gradient(135deg, rgba(0, 153, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
+      background: linear-gradient(135deg, rgba(0,153,255,.15), rgba(0,212,255,.08));
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 212, 255, 0.2);
+      border: 1px solid rgba(0,212,255,.2);
       border-radius: 16px;
       padding: 24px;
       text-align: center;
@@ -34,75 +36,110 @@
     .stat-card__label {
       font-size: 14px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255,255,255,.7);
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
     .chart-container {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255,255,255,.1);
       border-radius: 24px;
       padding: 32px;
-      min-height: 400px;
+      min-height: 260px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255,255,255,.5);
     }
   </style>
 </head>
+
 <body>
 
 <header class="top-bar">
-  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
-
+  <div class="top-bar__logo">SportTrack</div>
   <div class="top-bar__lang">
     <select id="langSelect" class="lang-select">
-      <option value="ru" data-i18n="lang_ru">Русский</option>
-      <option value="en" data-i18n="lang_en">English</option>
-      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+      <option value="ru">Русский</option>
+      <option value="en">English</option>
+      <option value="kz">Қазақша</option>
     </select>
   </div>
 </header>
 
 <main class="page">
-  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
+
+  <div style="display:flex; align-items:center; gap:16px; margin-bottom:32px;">
     <a href="athlete_page.html" class="btn-link">← Назад</a>
-    <h1 class="page-title" data-i18n="athlete_dashboard_progress_title">Прогресс</h1>
+    <h1 class="page-title">Прогресс</h1>
   </div>
 
   <div class="progress-grid">
     <div class="stat-card">
-      <div class="stat-card__value" id="totalWorkouts">0</div>
+      <div class="stat-card__value" id="totalWorkouts">—</div>
       <div class="stat-card__label">Тренировок выполнено</div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-card__value" id="totalTasks">0</div>
+      <div class="stat-card__value" id="totalTasks">—</div>
       <div class="stat-card__label">Заданий выполнено</div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-card__value" id="totalHours">0</div>
+      <div class="stat-card__value" id="totalHours">—</div>
       <div class="stat-card__label">Часов тренировок</div>
     </div>
   </div>
 
-  <div class="chart-container">
-    График прогресса будет отображаться здесь
-  </div>
+
 </main>
 
 <script>
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  if (user.role !== "athlete") window.location.href = "login.html";
+  const API = "";
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // Mock data - replace with API calls
-  document.getElementById("totalWorkouts").textContent = "24";
-  document.getElementById("totalTasks").textContent = "18";
-  document.getElementById("totalHours").textContent = "36";
+  if (!user || (user.role || "").toLowerCase() !== "athlete") {
+    location.href = "login.html";
+  }
+
+  async function loadProgress() {
+    try {
+      const resSummary = await fetch(
+        `${API}/api/athlete/summary?athlete_id=${encodeURIComponent(user.id)}`
+      );
+      const summary = await resSummary.json();
+
+      const resTasks = await fetch(
+        `${API}/api/athlete/tasks?athlete_id=${encodeURIComponent(user.id)}`
+      );
+      const tasks = await resTasks.json();
+
+      const completedTasks = Array.isArray(tasks)
+        ? tasks.filter(t =>
+            ["done", "rated"].includes((t.status || "").toLowerCase())
+          ).length
+        : 0;
+
+      const workouts = summary.workouts || 0;
+
+      // Реалистичный расчёт часов
+      const hours = Math.round(workouts * 1.5);
+
+      document.getElementById("totalWorkouts").textContent = workouts;
+      document.getElementById("totalTasks").textContent = completedTasks;
+      document.getElementById("totalHours").textContent = hours;
+
+    } catch (e) {
+      console.error(e);
+      document.getElementById("totalWorkouts").textContent = "0";
+      document.getElementById("totalTasks").textContent = "0";
+      document.getElementById("totalHours").textContent = "0";
+    }
+  }
+
+  loadProgress();
 </script>
 
 </body>

@@ -25,6 +25,9 @@
     <label class="label">Содержание (по дням)</label>
     <textarea id="planBody" class="input" rows="6" placeholder="День 1: ...&#10;День 2: ..."></textarea>
 
+    <label class="label">Фото (необязательно)</label>
+    <input id="media" class="input" type="file" accept="image/*" />
+
     <div class="row">
       <button id="saveBtn" class="btn-primary">Сохранить</button>
       <div id="status" class="status"></div>
@@ -33,63 +36,157 @@
 
   <div class="panel">
     <h2 class="page-subtitle">Созданные планы</h2>
-    <div id="plansList" class="list"></div>
+    <div id="plansList" class="list muted">Загрузка...</div>
   </div>
 </main>
 
 <script>
-const me = JSON.parse(localStorage.getItem("user") || "null");
-if (!me || me.role !== "coach") location.href = "login.html";
+  const API = "";
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me || (me.role || "").toLowerCase() !== "coach") location.href = "login.html";
 
-const sel = document.getElementById("athleteSelect");
-const statusEl = document.getElementById("status");
-const listEl = document.getElementById("plansList");
+  const sel = document.getElementById("athleteSelect");
+  const statusEl = document.getElementById("status");
+  const listEl = document.getElementById("plansList");
 
-function setStatus(text, ok=false){
-  statusEl.textContent = text;
-  statusEl.className = "status " + (ok ? "success" : "error");
-}
+  function setStatus(text, ok=false){
+    statusEl.textContent = text;
+    statusEl.className = "status " + (ok ? "success" : "error");
+  }
 
-function fillAthletes(){
-  const athletes = JSON.parse(localStorage.getItem("demo_athletes") || "[]");
-  sel.innerHTML = athletes.length
-    ? athletes.map(a => `<option value="${a.id}">${a.username} ${a.last_name||""}</option>`).join("")
-    : `<option value="">Нет спортсменов</option>`;
-}
+  async function loadAthletes(){
+    sel.innerHTML = `<option value="">Загрузка...</option>`;
+    const res = await fetch(`${API}/api/coach/athletes?coach_id=${me.id}&status=accepted`);
+    const data = await res.json().catch(()=>[]);
+    if (!res.ok) { sel.innerHTML = `<option value="">Ошибка</option>`; return; }
+    if (!Array.isArray(data) || data.length === 0){
+      sel.innerHTML = `<option value="">Нет спортсменов</option>`;
+      return;
+    }
+    sel.innerHTML = data.map(a =>
+      `<option value="${a.id}">${(a.username||"Без имени")} ${(a.last_name||"")}</option>`
+    ).join("");
+  }
 
-function render(){
-  const all = JSON.parse(localStorage.getItem("demo_plans") || "[]");
-  listEl.innerHTML = all.length ? all.map(p => `
-    <div class="list-item">
-      <div>
-        <div class="list-title">${p.name}</div>
-        <div class="list-sub">athlete_id: ${p.athlete_id} • ${new Date(p.created_at).toLocaleString()}</div>
+  async function uploadIfNeeded(){
+    const f = document.getElementById("media").files?.[0];
+    if (!f) return null;
+
+    const fd = new FormData();
+    fd.append("file", f);
+
+    const res = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok) throw new Error(data.detail || ("HTTP " + res.status));
+    return data.url;
+  }
+
+  async function loadPlans(){
+    listEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+    const res = await fetch(`${API}/api/coach/plans?coach_id=${me.id}`);
+    const data = await res.json().catch(()=>[]);
+    if (!res.ok){
+      listEl.innerHTML = `<div class="muted">Ошибка загрузки</div>`;
+      return;
+    }
+    if (!Array.isArray(data) || data.length === 0){
+      listEl.innerHTML = `<div class="muted">Планов пока нет</div>`;
+      return;
+    }
+    listEl.innerHTML = data.map(p => `
+      <div class="list-item">
+        <div>
+          <div class="list-title">${p.name || "План"}</div>
+          <div class="list-sub">athlete_id: ${p.athlete_id} • ${p.created_at ? new Date(p.created_at).toLocaleString() : ""}</div>
+          <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-small-outline" type="button" onclick='alert(${JSON.stringify(p.body || "")})'>Посмотреть</button>
+            ${p.media_url ? `<a class="btn-small-outline" href="${p.media_url}" target="_blank">Открыть фото</a>` : ""}
+          </div>
+        </div>
       </div>
-      <button class="btn-link" onclick='alert(${JSON.stringify(p.body)})'>Посмотреть</button>
-    </div>
-  `).join("") : `<div class="muted">Планов пока нет</div>`;
-}
+    `).join("");
+  }
 
-document.getElementById("saveBtn").onclick = async () => {
-  const athlete_id = sel.value;
-  const name = document.getElementById("planName").value.trim();
-  const body = document.getElementById("planBody").value.trim();
-  statusEl.textContent = ""; statusEl.className = "status";
+  document.getElementById("saveBtn").onclick = async () => {
+    statusEl.textContent = ""; statusEl.className = "status";
 
-  if (!athlete_id || !name || !body) return setStatus("Заполни спортсмена/название/содержание");
+    const athlete_id = Number(sel.value || 0);
+    const name = document.getElementById("planName").value.trim();
+    const body = document.getElementById("planBody").value.trim();
 
-  const all = JSON.parse(localStorage.getItem("demo_plans") || "[]");
-  all.unshift({ id: Date.now(), coach_id: me.id, athlete_id: Number(athlete_id), name, body, created_at: Date.now() });
-  localStorage.setItem("demo_plans", JSON.stringify(all));
+    if (!athlete_id || !name || !body) return setStatus("Заполни спортсмена/название/содержание");
 
-  setStatus("План сохранён ✅", true);
-  document.getElementById("planName").value = "";
-  document.getElementById("planBody").value = "";
-  render();
-};
+    try{
+      const media_url = await uploadIfNeeded();
 
-fillAthletes();
-render();
+      const res = await fetch(`${API}/api/coach/plans`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ coach_id: me.id, athlete_id, name, body, media_url })
+      });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) return setStatus(data.detail || ("Ошибка: " + res.status));
+
+      setStatus("План сохранён ✅", true);
+      document.getElementById("planName").value = "";
+      document.getElementById("planBody").value = "";
+      document.getElementById("media").value = "";
+
+      await loadPlans();
+    } catch(e){
+      console.error(e);
+      setStatus("Ошибка сохранения: " + (e.message || ""));
+    }
+  };
+
+  loadAthletes();
+  loadPlans();
 </script>
 </body>
 </html>
+(function () {
+  const dict = {
+    ru: {
+      app_title: "SportTrack",
+      back: "← Назад",
+      // добавляй по мере надобности
+    },
+    en: {
+      app_title: "SportTrack",
+      back: "← Back",
+    },
+    kz: {
+      app_title: "SportTrack",
+      back: "← Артқа",
+    },
+  };
+
+  function getLang() {
+    return localStorage.getItem("lang") || "ru";
+  }
+
+  function applyLang(lang) {
+    const d = dict[lang] || dict.ru;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      if (d[key] != null) el.textContent = d[key];
+    });
+  }
+
+  window.setLang = function (lang) {
+    localStorage.setItem("lang", lang);
+    applyLang(lang);
+  };
+
+  window.initLang = function () {
+    const select = document.getElementById("langSelect");
+    const lang = getLang();
+    if (select) {
+      select.value = lang;
+      select.addEventListener("change", () => setLang(select.value));
+    }
+    applyLang(lang);
+  };
+
+  document.addEventListener("DOMContentLoaded", initLang);
+})();

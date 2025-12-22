@@ -1,45 +1,53 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SportTrack — Восстановление пароля</title>
-    <link rel="stylesheet" href="auth.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Восстановление пароля</title>
+  <link rel="stylesheet" href="auth.css">
 </head>
+
 <body>
-
-<header class="top-bar">
-    <div class="logo">SPORTTRACK</div>
+  <header class="top-bar">
+    <div class="auth-logo">SPORTTRACK</div>
     <div class="lang-switcher">
-        <span class="active">RU</span>
-        <span>|</span>
-        <span>KZ</span>
-        <span>|</span>
-        <span>EN</span>
+      <span class="active">RU</span>
+      <span>|</span>
+      <span>KZ</span>
+      <span>|</span>
+      <span>EN</span>
     </div>
-</header>
+  </header>
 
-<main class="auth-main">
+  <main class="auth-main">
     <section class="auth-card">
-        <h1 class="auth-title">Восстановление пароля</h1>
-        <p class="auth-subtitle">Введите email для получения кода</p>
+      <h1 class="auth-title">Восстановление пароля</h1>
+      <p class="auth-subtitle">Введите email для получения кода</p>
 
-        <div class="auth-form">
-            <label class="auth-label" for="reset_email">Email</label>
-            <input id="reset_email" type="email" class="auth-input" placeholder="email@example.com">
+      <form class="auth-form" onsubmit="return false;">
+        <label class="auth-label" for="reset_email">Email</label>
+        <input
+          id="reset_email"
+          type="email"
+          class="auth-input"
+          placeholder="email@example.com"
+          autocomplete="email"
+        >
 
-            <button class="btn-auth">Отправить код</button>
+        <button class="btn-auth btn" type="button">
+          Отправить код
+        </button>
 
-            <p class="auth-link-text">
-                Вспомнили пароль?
-                <a href="login.html" class="auth-link">Войти</a>
-            </p>
+        <p class="auth-link-text">
+          Вспомнили пароль?
+          <a href="login.html" class="auth-link">Войти</a>
+        </p>
 
-            <p id="resetEmailStatus" class="auth-status"></p>
-        </div>
+        <p id="resetEmailStatus" class="status"></p>
+      </form>
     </section>
-</main>
+  </main>
 
-<script src="reset_password.js"></script>
+  <script src="reset_password.js"></script>
 </body>
 </html>

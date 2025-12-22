@@ -18,7 +18,6 @@
     <div class="page-subtitle">Поиск по ID, email или имени спортсмена</div>
   </div>
 
-  <!-- ПОИСК -->
   <div class="panel panel--wide">
     <div class="panel-header">
       <div class="panel-search-row">
@@ -29,11 +28,9 @@
         Примеры: <b>15</b> или <b>a2@mail.com</b> или <b>Бекназар</b>
       </div>
     </div>
-
     <div id="list" class="list"></div>
   </div>
 
-  <!-- ВЫБРАННЫЙ (из поиска) -->
   <div class="panel panel--wide">
     <div class="panel-header">
       <h2 class="page-subtitle">Выбранный спортсмен</h2>
@@ -41,7 +38,6 @@
     <div id="selected" class="muted">Выбери спортсмена из результатов поиска</div>
   </div>
 
-  <!-- МОИ СПОРТСМЕНЫ -->
   <div class="panel panel--wide">
     <div class="panel-header">
       <h2 class="page-subtitle">Информация</h2>
@@ -51,11 +47,11 @@
 </main>
 
 <script>
-  const API = "http://127.0.0.1:7003";
-  const SEARCH_URL = `${API}/api/users/search`;
+  // ВАЖНО: один порт => только относительные пути
+  const SEARCH_URL = `/api/users/search`;
 
   const me = JSON.parse(localStorage.getItem("user") || "null");
-  if (!me || me.role !== "coach") location.href = "login.html";
+  if (!me || (me.role || "").toLowerCase() !== "coach") location.href = "login.html";
 
   const qEl = document.getElementById("q");
   const listEl = document.getElementById("list");
@@ -74,32 +70,25 @@
 
   function actionsHtml(a){
     const s = a.link_status || "none";
-
     if (s === "none" || s === null) {
       return `
         <button type="button" class="btn-primary btn-small"
           onclick="sendRequest(${a.id}); event.stopPropagation();">
           Отправить запрос
-        </button>
-      `;
+        </button>`;
     }
-
     if (s === "pending_from_coach" || s === "sent") {
       return `<span class="badge warn">ожидает</span>`;
     }
-
     return `
       <button type="button" class="btn-primary btn-small"
         onclick="openChat(${a.id}); event.stopPropagation();">
         Чат
-      </button>
-    `;
+      </button>`;
   }
 
-  // ---------- ПОИСК ----------
   async function doSearch() {
     const q = (qEl.value || "").trim();
-
     listEl.innerHTML = `<div class="muted">Ищу...</div>`;
     selectedEl.innerHTML = `<div class="muted">Выбери спортсмена из результатов поиска</div>`;
 
@@ -110,7 +99,7 @@
 
     try {
       const url = `${SEARCH_URL}?q=${encodeURIComponent(q)}&coach_id=${me.id}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: { "Accept": "application/json" } });
       const data = await res.json().catch(() => ([]));
 
       if (!res.ok) {
@@ -123,10 +112,9 @@
 
       lastResults = athletes;
       renderList(athletes);
-
     } catch (e) {
       console.error(e);
-      listEl.innerHTML = `<div class="muted">Нет связи с users_service. Проверь API=${API}</div>`;
+      listEl.innerHTML = `<div class="muted">Нет связи с сервером. Проверь, что бэк запущен.</div>`;
     }
   }
 
@@ -143,16 +131,11 @@
       return `
         <div class="list-item" onclick="showSelected(${a.id})" style="cursor:pointer;">
           <div>
-            <div class="list-title">
-              ${fullName} ${statusBadge(s)}
-            </div>
+            <div class="list-title">${fullName} ${statusBadge(s)}</div>
             <div class="list-sub">${a.email ?? ""} • ${a.sport ?? "—"}</div>
           </div>
-          <div onclick="event.stopPropagation()">
-            ${actionsHtml(a)}
-          </div>
-        </div>
-      `;
+          <div onclick="event.stopPropagation()">${actionsHtml(a)}</div>
+        </div>`;
     }).join("");
   }
 
@@ -161,7 +144,6 @@
     if (!a) return;
 
     const s = a.link_status || "none";
-
     selectedEl.innerHTML = `
       <div class="info-card">
         <div><b>ID:</b> ${a.id ?? ""}</div>
@@ -170,19 +152,15 @@
         <div><b>Email:</b> ${a.email ?? ""}</div>
         <div><b>Вид спорта:</b> ${a.sport ?? "—"}</div>
         <div><b>Статус:</b> ${s}</div>
-        <div style="margin-top:10px;">
-          ${actionsHtml(a)}
-        </div>
-      </div>
-    `;
+        <div style="margin-top:10px;">${actionsHtml(a)}</div>
+      </div>`;
   };
 
-  // ---------- МОИ СПОРТСМЕНЫ (ТОЛЬКО accepted) ----------
   async function loadMyAthletes(){
     infoEl.innerHTML = `<div class="muted">Загружаю добавленных спортсменов...</div>`;
 
     try {
-      const res = await fetch(`${API}/api/coach/athletes?coach_id=${me.id}&status=accepted`);
+      const res = await fetch(`/api/coach/athletes?coach_id=${me.id}&status=accepted`);
       const data = await res.json().catch(()=>[]);
 
       if (!res.ok) {
@@ -198,35 +176,29 @@
       infoEl.innerHTML = `
         <div class="info-card">
           <div style="margin-bottom:10px;"><b>Мои спортсмены</b></div>
-
           ${data.map(a => `
             <div class="list-item">
               <div>
-                <div class="list-title">
-                  ${(a.username || "Без имени")} <span class="badge success">принят</span>
-                </div>
+                <div class="list-title">${(a.username || "Без имени")} <span class="badge success">принят</span></div>
                 <div class="list-sub">${a.email || ""} • ${a.sport || "—"} • ID: ${a.id}</div>
               </div>
-
               <div style="display:flex; gap:8px;">
                 <button type="button" class="btn-primary btn-small" onclick="openChat(${a.id})">Чат</button>
                 <button type="button" class="btn-small-outline" onclick="removeMyAthlete(${a.id})">Удалить</button>
               </div>
             </div>
           `).join("")}
-        </div>
-      `;
-
+        </div>`;
     } catch (e) {
       console.error(e);
-      infoEl.innerHTML = `<div class="muted">Нет связи с API=${API}</div>`;
+      infoEl.innerHTML = `<div class="muted">Нет связи с сервером.</div>`;
     }
   }
 
   window.removeMyAthlete = async function(athleteId){
     if (!confirm("Удалить спортсмена из списка?")) return;
 
-    const res = await fetch(`${API}/api/coach/athletes/remove`, {
+    const res = await fetch(`/api/coach/athletes/remove`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ coach_id: me.id, athlete_id: athleteId })
@@ -237,13 +209,11 @@
       alert(err.detail || ("Ошибка удаления: " + res.status));
       return;
     }
-
     loadMyAthletes();
   };
 
-  // ---------- ОТПРАВКА ЗАПРОСА ----------
   window.sendRequest = async function(athleteId){
-    const res = await fetch(`${API}/api/coach/request`, {
+    const res = await fetch(`/api/coach/request`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ athlete_id: athleteId, coach_id: me.id })
@@ -257,21 +227,19 @@
 
     alert("Запрос отправлен");
     doSearch();
+    loadMyAthletes();
   };
 
   window.openChat = function(athleteId){
     alert("Открыть чат со спортсменом ID: " + athleteId);
   };
 
-  // UI events
   searchBtn.addEventListener("click", doSearch);
   qEl.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
 
   listEl.innerHTML = `<div class="muted">Введи запрос сверху и нажми “Найти”.</div>`;
-
-  // init
   loadMyAthletes();
 </script>
-
 </body>
 </html>
+

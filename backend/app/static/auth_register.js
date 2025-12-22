@@ -55,7 +55,6 @@ function roleRedirect(role) {
   else location.href = "/static/athlete_page.html";
 }
 
-/* STEP 1: send code */
 sendCodeBtn.addEventListener("click", async () => {
   setErr(emailError); setErr(confirmError); setErr(registerError);
 
@@ -78,7 +77,6 @@ sendCodeBtn.addEventListener("click", async () => {
   }
 });
 
-/* resend code */
 resendBtn.addEventListener("click", async () => {
   setErr(confirmError);
 
@@ -96,7 +94,6 @@ resendBtn.addEventListener("click", async () => {
   }
 });
 
-/* STEP 2: check code */
 confirmBtn.addEventListener("click", async () => {
   setErr(confirmError); setErr(registerError);
 
@@ -118,7 +115,6 @@ confirmBtn.addEventListener("click", async () => {
   }
 });
 
-/* STEP 3: register */
 registerBtn.addEventListener("click", async () => {
   setErr(registerError);
 
@@ -154,7 +150,6 @@ registerBtn.addEventListener("click", async () => {
   }
 });
 
-/* back buttons */
 backToEmail.addEventListener("click", (e) => {
   e.preventDefault();
   confirmedCode = "";

@@ -6,12 +6,16 @@
   <title>SportTrack — Кабинет спортсмена</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="lang.js"></script>
+  <style>
+    /* чтобы карточки точно были кликабельные */
+    .coach-menu__item { display:flex; text-decoration:none; cursor:pointer; }
+    .coach-menu__item * { pointer-events:none; }
+    .coach-menu__item { pointer-events:auto; }
+  </style>
 </head>
 <body>
-
 <header class="top-bar">
   <div class="top-bar__logo">SportTrack</div>
-
   <div class="top-bar__lang">
     <select id="langSelect" class="lang-select">
       <option value="ru">Русский</option>
@@ -22,24 +26,17 @@
 </header>
 
 <main class="coach-layout coach-layout--dashboard">
-
-  <!-- Left profile card -->
   <section class="panel coach-card coach-card--dashboard">
     <div class="coach-card__top">
       <div class="coach-avatar">
         <span id="athleteAvatarLetter" class="coach-avatar__text"></span>
       </div>
-
       <div class="coach-card__info">
         <h1 id="athleteName" class="coach-name"></h1>
-
         <p class="coach-status">
           <span>Статус:</span> <strong>спортсмен</strong>
         </p>
-
-        <button id="editProfileBtn" class="btn-link">
-          Редактировать профиль
-        </button>
+        <button id="editProfileBtn" class="btn-link">Редактировать профиль</button>
       </div>
     </div>
 
@@ -48,12 +45,10 @@
         <span class="coach-label">ID:</span>
         <span id="athleteIdValue"></span>
       </div>
-
       <div class="coach-info-row">
         <span class="coach-label">Email:</span>
         <span id="athleteEmailValue"></span>
       </div>
-
       <div class="coach-info-row">
         <span class="coach-label">Вид спорта:</span>
         <span id="athleteSportValue">—</span>
@@ -61,39 +56,29 @@
     </div>
   </section>
 
-  <!-- Bottom left stats summary -->
   <section class="coach-summary coach-summary--dashboard">
     <div class="coach-summary__item">
-      <span id="athPlans">0</span>
+      <span id="athPlans">—</span>
       <span>Планов</span>
     </div>
-
     <div class="coach-summary__item">
-      <span id="athWorkouts">0</span>
+      <span id="athWorkouts">—</span>
       <span>Тренировок</span>
     </div>
-
     <div class="coach-summary__item">
-      <span id="athTasks">0</span>
+      <span id="athTasks">—</span>
       <span>Активных задач</span>
     </div>
   </section>
 
-  <!-- Center main content -->
   <section class="coach-right coach-right--dashboard">
-
     <div class="coach-right-header">
       <h2 class="coach-welcome">
-        <span>Добро пожаловать</span>,
-        <span id="athleteFullName"></span>
+        <span>Добро пожаловать</span>, <span id="athleteFullName"></span>
       </h2>
-
-      <button id="openChatFromAthlete" class="btn-primary">
-        💬 <span>Чат</span>
-      </button>
+      <button id="openChatFromAthlete" class="btn-primary">💬 <span>Чат</span></button>
     </div>
 
-    <!-- 2x2 Grid for menu items -->
     <section class="coach-menu">
       <a href="athlete_progress.html" class="coach-menu__item">
         <div class="coach-menu__icon">📊</div>
@@ -129,27 +114,25 @@
     </section>
   </section>
 
-  <!-- Activity panel now in center column below menu -->
   <section class="panel activity-panel activity-panel--dashboard">
     <div class="panel-header">
       <h2 class="page-subtitle">Последняя активность</h2>
     </div>
     <div id="athleteActivity" class="list muted">Загрузка...</div>
   </section>
-
 </main>
 
 <script>
-  const API = "http://127.0.0.1:7003";
+  const API = "";
 
   const raw = localStorage.getItem("user");
-  if (!raw) window.location.href = "login.html";
-
+  if (!raw) location.href = "login.html";
   const user = JSON.parse(raw);
-  if (user.role !== "athlete") window.location.href = "login.html";
+  if ((user.role || "").toLowerCase() !== "athlete") location.href = "login.html";
 
   document.getElementById("athleteName").textContent = user.username || "";
-  document.getElementById("athleteFullName").textContent = user.last_name ? `${user.username} ${user.last_name}` : (user.username || "");
+  document.getElementById("athleteFullName").textContent =
+    user.last_name ? `${user.username} ${user.last_name}` : (user.username || "");
   document.getElementById("athleteIdValue").textContent = user.id ?? "";
   document.getElementById("athleteEmailValue").textContent = user.email ?? "";
   document.getElementById("athleteSportValue").textContent = user.sport ?? "—";
@@ -157,48 +140,70 @@
   const first = (user.username || "").trim()[0];
   document.getElementById("athleteAvatarLetter").textContent = first ? first.toUpperCase() : "A";
 
-  document.getElementById("editProfileBtn").onclick = () => {
-    window.location.href = "profile_edit.html";
-  };
+  document.getElementById("editProfileBtn").onclick = () => location.href = "profile_edit.html";
+  document.getElementById("openChatFromAthlete").onclick = () => location.href = "chat.html";
 
-  document.getElementById("openChatFromAthlete").onclick = () => {
-    window.location.href = "chat.html";
-  };
+  function fmtDate(d){
+    try { return new Date(d).toLocaleString(); } catch { return ""; }
+  }
+
+  async function loadSummary(){
+    const plansEl = document.getElementById("athPlans");
+    const workoutsEl = document.getElementById("athWorkouts");
+    const tasksEl = document.getElementById("athTasks");
+
+    plansEl.textContent = "…";
+    workoutsEl.textContent = "…";
+    tasksEl.textContent = "…";
+
+    try {
+      const res = await fetch(`${API}/api/athlete/summary?athlete_id=${encodeURIComponent(user.id)}`, {
+        headers: { "Accept": "application/json" }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      plansEl.textContent = String(data.plans ?? 0);
+      workoutsEl.textContent = String(data.workouts ?? 0);
+      tasksEl.textContent = String(data.active_tasks ?? 0);
+    } catch (e) {
+      console.error(e);
+      plansEl.textContent = "—";
+      workoutsEl.textContent = "—";
+      tasksEl.textContent = "—";
+    }
+  }
 
   async function loadAthleteActivity(){
     const el = document.getElementById("athleteActivity");
     el.innerHTML = `<div class="muted">Загрузка...</div>`;
 
     try {
-      const res = await fetch(`${API}/api/activity?user_id=${user.id}&limit=6`);
-      if (!res.ok) {
-        el.innerHTML = `<div class="muted">Пока активности нет</div>`;
-        return;
-      }
+      const res = await fetch(`${API}/api/activity?user_id=${encodeURIComponent(user.id)}&limit=6`, {
+        headers: { "Accept": "application/json" }
+      });
       const data = await res.json().catch(()=>[]);
-      if (!Array.isArray(data) || data.length === 0) {
+      if (!res.ok || !Array.isArray(data) || data.length === 0){
         el.innerHTML = `<div class="muted">Пока активности нет</div>`;
         return;
       }
-
       el.innerHTML = data.map(a => `
         <div class="list-item">
           <div>
             <div class="list-title">${a.title || "Событие"}</div>
             <div class="list-sub">${a.message || ""}</div>
           </div>
-          <span class="badge">${a.created_at ? new Date(a.created_at).toLocaleString() : ""}</span>
+          <span class="badge">${a.created_at ? fmtDate(a.created_at) : ""}</span>
         </div>
       `).join("");
-
-    } catch (e) {
+    } catch (e){
       console.error(e);
       el.innerHTML = `<div class="muted">Пока активности нет</div>`;
     }
   }
 
+  loadSummary();
   loadAthleteActivity();
 </script>
-
 </body>
 </html>

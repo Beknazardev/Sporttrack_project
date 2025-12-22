@@ -6,68 +6,39 @@
   <title>SportTrack — Задания</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="lang.js"></script>
+
   <style>
-    .task-item {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 20px 24px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      transition: all 0.3s ease;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
+    .task-card{display:flex; justify-content:space-between; gap:16px;padding:18px 20px; border-radius:16px;
+      background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);backdrop-filter: blur(10px);margin-bottom:14px;}
+    .task-main{flex:1; min-width:0;}
+    .task-title{font-family:"Rajdhani",sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:6px;}
+    .task-desc{color:rgba(255,255,255,.65); font-size:14px; white-space:pre-wrap;}
+    .task-meta{margin-top:10px; font-size:12px; color:rgba(255,255,255,.55);}
+    .task-actions{display:flex; flex-direction:column; gap:10px; align-items:flex-end; min-width:190px;}
+    .task-status{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.12);}
+    .task-status.sent{color:#9fe7ff; border-color: rgba(0,212,255,.3);}
+    .task-status.submitted{color:#ffe7a1; border-color: rgba(255,200,0,.35);}
+    .task-status.rated{color:#b7ffbd; border-color: rgba(0,255,120,.35);}
+    .task-status.done{color:#b7ffbd; border-color: rgba(0,255,120,.35);}
+    .task-status.error{color:#ffb0b0; border-color: rgba(255,0,0,.25);}
 
-    .task-item:hover {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-      border-color: rgba(0, 212, 255, 0.3);
-    }
-
-    .task-checkbox {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: all 0.3s ease;
-    }
-
-    .task-checkbox:hover {
-      border-color: #00d4ff;
-    }
-
-    .task-checkbox.checked {
-      background: #00d4ff;
-      border-color: #00d4ff;
-    }
-
-    .task-content {
-      flex: 1;
-    }
-
-    .task-title {
-      font-family: "Rajdhani", sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 4px;
-    }
-
-    .task-description {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.6);
-    }
+    .submit-box{margin-top:14px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.15);display:none;}
+    .submit-box.open{display:block;}
+    .submit-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .submit-row .input{flex:1; min-width:220px;}
+    .btn-small{padding:10px 12px; border-radius:10px;}
+    .thumb{margin-top:10px; display:flex; gap:10px; align-items:center;}
+    .thumb img{width:72px; height:72px; object-fit:cover; border-radius:12px; border:1px solid rgba(255,255,255,.12);}
+    .submission{margin-top:12px; padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.12);}
   </style>
 </head>
-<body>
 
+<body>
 <header class="top-bar">
   <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
-
   <div class="top-bar__lang">
     <select id="langSelect" class="lang-select">
       <option value="ru" data-i18n="lang_ru">Русский</option>
@@ -78,65 +49,192 @@
 </header>
 
 <main class="page">
-  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
+  <div style="display:flex; align-items:center; gap:16px; margin-bottom:28px;">
     <a href="athlete_page.html" class="btn-link">← Назад</a>
     <h1 class="page-title">Задания</h1>
   </div>
 
   <section class="panel">
     <div class="panel-header">
-      <h2 class="page-subtitle">Активные задачи</h2>
+      <h2 class="page-subtitle">Активные задания</h2>
     </div>
-    <div id="tasksList"></div>
+    <div id="tasksList" class="list muted">Загрузка...</div>
   </section>
 </main>
 
 <script>
-  const API = "http://127.0.0.1:7003";
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  if (user.role !== "athlete") window.location.href = "login.html";
+  const API = "";
 
-  async function loadTasks() {
-    const el = document.getElementById("tasksList");
-    el.innerHTML = `<div class="muted">Загрузка...</div>`;
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me) location.href = "login.html";
+  if ((me.role || "").toLowerCase() !== "athlete") location.href = "login.html";
 
-    try {
-      const res = await fetch(`${API}/api/tasks?athlete_id=${user.id}`);
-      if (!res.ok) {
-        el.innerHTML = `<div class="muted">Пока нет заданий</div>`;
-        return;
-      }
-      const data = await res.json().catch(() => []);
-      if (!Array.isArray(data) || data.length === 0) {
-        el.innerHTML = `<div class="muted">Пока нет заданий</div>`;
-        return;
-      }
+  const listEl = document.getElementById("tasksList");
 
-      el.innerHTML = data.map((task, index) => `
-        <div class="task-item">
-          <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${index}, ${task.id})"></div>
-          <div class="task-content">
-            <div class="task-title">${task.title || "Задача"}</div>
-            <div class="task-description">${task.description || ""}</div>
-          </div>
-          <span class="badge">${task.deadline ? new Date(task.deadline).toLocaleDateString() : ""}</span>
-        </div>
-      `).join("");
+  function fmtDate(d){
+    try { return new Date(d).toLocaleString(); } catch { return ""; }
+  }
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+  }
 
-    } catch (e) {
+  function statusBadge(status, rating){
+    const s = (status || "").toLowerCase();
+    if (s === "sent") return `<span class="task-status sent">Выдано</span>`;
+    if (s === "submitted") return `<span class="task-status submitted">Отправлено тренеру</span>`;
+    if (s === "rated") return `<span class="task-status rated">Оценено: ${rating ?? "—"}/10</span>`;
+    if (s === "done") return `<span class="task-status done">Выполнено</span>`;
+    return `<span class="task-status">${esc(status || "—")}</span>`;
+  }
+
+  window.toggleBox = function(taskId){
+    const box = document.getElementById(`box_${taskId}`);
+    if (!box) return;
+    box.classList.toggle("open");
+  }
+
+  function setTaskStatus(taskId, text, ok){
+    const el = document.getElementById(`st_${taskId}`);
+    if (!el) return;
+    el.textContent = text;
+    el.className = "status " + (ok ? "success" : "error");
+  }
+
+  window.submitTask = async function(taskId){
+    const txt = (document.getElementById(`text_${taskId}`)?.value || "").trim();
+    const fileInp = document.getElementById(`file_${taskId}`);
+    const file = fileInp?.files?.[0] || null;
+
+    if (!txt && !file){
+      setTaskStatus(taskId, "Добавь текст или фото", false);
+      return;
+    }
+
+    setTaskStatus(taskId, "Отправка...", true);
+
+    try{
+      const fd = new FormData();
+      fd.append("athlete_id", String(me.id));
+      fd.append("text", txt);
+      if (file) fd.append("file", file);
+
+      const res = await fetch(`${API}/api/athlete/tasks/${encodeURIComponent(taskId)}/submit`, {
+        method: "POST",
+        body: fd
+      });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      setTaskStatus(taskId, "Отправлено тренеру ✅", true);
+      await loadTasks(); // перерисуем — увидишь сохранённый submission
+    } catch(e){
       console.error(e);
-      el.innerHTML = `<div class="muted">Пока нет заданий</div>`;
+      setTaskStatus(taskId, "Ошибка отправки (нет связи/ошибка сервера)", false);
     }
   }
 
-  function toggleTask(index, taskId) {
-    // Toggle task completion
-    console.log("Toggle task", taskId);
-    // API call to mark task as complete/incomplete
+  async function loadTasks(){
+    listEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+    try{
+      const res = await fetch(`${API}/api/athlete/tasks?athlete_id=${encodeURIComponent(me.id)}`, {
+        headers: { "Accept": "application/json" }
+      });
+      const data = await res.json().catch(()=>[]);
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      const tasks = Array.isArray(data) ? data : [];
+      if (!tasks.length){
+        listEl.innerHTML = `<div class="muted">Пока нет заданий</div>`;
+        return;
+      }
+
+      const active = tasks.filter(t => !["rated","done"].includes((t.status||"").toLowerCase()));
+      if (!active.length){
+        listEl.innerHTML = `<div class="muted">Активных заданий нет</div>`;
+        return;
+      }
+
+      listEl.innerHTML = active.map(t => {
+        const due = t.due_date ? new Date(t.due_date).toLocaleDateString() : "";
+        const dueBadge = due ? `<span class="badge">${esc(due)}</span>` : `<span class="badge">без дедлайна</span>`;
+
+        const coachMedia = t.media_url
+          ? `<div class="task-meta">Фото от тренера: <a class="btn-link" href="${esc(t.media_url)}" target="_blank">открыть</a></div>`
+          : "";
+
+        const sub = t.submission || null;
+        const subBlock = sub ? `
+          <div class="submission">
+            <div class="task-meta">✅ Отправлено тренеру: ${sub.created_at ? esc(fmtDate(sub.created_at)) : ""}</div>
+            ${sub.text ? `<div style="margin-top:8px; white-space:pre-wrap;">${esc(sub.text)}</div>` : ""}
+            ${sub.media_url ? `<div style="margin-top:8px;"><a class="btn-link" href="${esc(sub.media_url)}" target="_blank">Открыть фото</a></div>` : ""}
+          </div>
+        ` : "";
+
+        const canSubmit = ((t.status||"").toLowerCase() !== "submitted") && !sub;
+
+        return `
+          <div class="task-card" id="task_${t.id}">
+            <div class="task-main">
+              <div class="task-title">${esc(t.title || "Задание")}</div>
+              <div class="task-desc">${esc(t.description || "")}</div>
+
+              <div class="task-meta">
+                ${t.created_at ? ("Выдано: " + esc(fmtDate(t.created_at))) : ""}
+                ${t.coach_id ? (" • coach_id: " + esc(t.coach_id)) : ""}
+              </div>
+
+              ${coachMedia}
+              ${subBlock}
+
+              <div class="submit-box ${canSubmit ? "" : ""}" id="box_${t.id}">
+                <div class="task-meta" style="margin-bottom:8px;">Сдать задание (текст + фото):</div>
+                <textarea class="input" rows="3" id="text_${t.id}" placeholder="Напиши что сделал, время, ощущения..."></textarea>
+
+                <div class="submit-row" style="margin-top:10px;">
+                  <input class="input" type="file" accept="image/*" id="file_${t.id}">
+                  <button class="btn-primary btn-small" onclick="submitTask(${t.id})">Отправить тренеру</button>
+                  <button class="btn-small-outline btn-small" onclick="toggleBox(${t.id})">Свернуть</button>
+                </div>
+
+                <div class="thumb" id="thumb_${t.id}" style="display:none;"></div>
+                <div class="status" id="st_${t.id}" style="margin-top:10px;"></div>
+              </div>
+            </div>
+
+            <div class="task-actions">
+              ${dueBadge}
+              ${statusBadge(t.status, t.rating)}
+              <button class="btn-primary btn-small" onclick="toggleBox(${t.id})">
+                ${canSubmit ? "Сдать" : "Отправлено (посмотреть)"}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      active.forEach(t => {
+        const inp = document.getElementById(`file_${t.id}`);
+        const thumb = document.getElementById(`thumb_${t.id}`);
+        if (!inp || !thumb) return;
+
+        inp.addEventListener("change", () => {
+          const f = inp.files && inp.files[0];
+          if (!f) { thumb.style.display="none"; thumb.innerHTML=""; return; }
+          const url = URL.createObjectURL(f);
+          thumb.style.display="flex";
+          thumb.innerHTML = `<img src="${url}" alt="preview"><div class="muted" style="font-size:12px;">${esc(f.name)}</div>`;
+        });
+      });
+
+    } catch(e){
+      console.error(e);
+      listEl.innerHTML = `<div class="muted">Нет связи с сервером</div>`;
+    }
   }
 
   loadTasks();
 </script>
-
 </body>
 </html>

@@ -8,10 +8,8 @@
   <script src="lang.js"></script>
 </head>
 <body>
-
 <header class="top-bar">
   <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
-
   <div class="top-bar__lang">
     <select id="langSelect" class="lang-select">
       <option value="ru" data-i18n="lang_ru">Русский</option>
@@ -21,59 +19,79 @@
   </div>
 </header>
 
-<main class="page">
-  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
-    <a href="athlete_page.html" class="btn-link">← Назад</a>
-    <h1 class="page-title" data-i18n="athlete_dashboard_workouts_title">Мои тренировки</h1>
+<main class="page-inner">
+  <div class="page-header-block">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a href="athlete_page.html" class="btn-link">← Назад</a>
+      <h1 class="page-title">Мои тренировки</h1>
+    </div>
+    <div class="page-subtitle">Планы от тренера</div>
   </div>
 
-  <section class="panel">
+  <div class="panel panel--wide">
     <div class="panel-header">
       <h2 class="page-subtitle">Запланированные тренировки</h2>
     </div>
-    <div id="workoutsList" class="list"></div>
-  </section>
+    <div id="plans" class="list muted">Загрузка...</div>
+  </div>
 </main>
 
 <script>
-  const API = "http://127.0.0.1:7003";
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  if (user.role !== "athlete") window.location.href = "login.html";
+  const API = "";
 
-  async function loadWorkouts() {
-    const el = document.getElementById("workoutsList");
-    el.innerHTML = `<div class="muted">Загрузка...</div>`;
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me) location.href = "login.html";
+  if ((me.role || "").toLowerCase() !== "athlete") location.href = "login.html";
 
-    try {
-      const res = await fetch(`${API}/api/workouts?athlete_id=${user.id}`);
-      if (!res.ok) {
-        el.innerHTML = `<div class="muted">Пока нет тренировок</div>`;
+  const listEl = document.getElementById("plans");
+
+  function fmtDate(d){
+    try { return new Date(d).toLocaleString(); } catch { return ""; }
+  }
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  async function loadPlans(){
+    listEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+    try{
+      const res = await fetch(`${API}/api/athlete/plans?athlete_id=${encodeURIComponent(me.id)}`, {
+        headers: { "Accept": "application/json" }
+      });
+
+      const data = await res.json().catch(()=>[]);
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      const plans = Array.isArray(data) ? data : [];
+      if (!plans.length){
+        listEl.innerHTML = `<div class="muted">Пока тренировок нет</div>`;
         return;
       }
-      const data = await res.json().catch(() => []);
-      if (!Array.isArray(data) || data.length === 0) {
-        el.innerHTML = `<div class="muted">Пока нет тренировок</div>`;
-        return;
-      }
 
-      el.innerHTML = data.map(w => `
+      listEl.innerHTML = plans.map(p => `
         <div class="list-item">
-          <div>
-            <div class="list-title">${w.title || "Тренировка"}</div>
-            <div class="list-sub">${w.description || ""}</div>
+          <div style="max-width: 75%;">
+            <div class="list-title">${esc(p.name || "План")}</div>
+            <div class="list-sub">${esc(p.body || "")}</div>
+            <div class="muted" style="font-size:12px;margin-top:6px;">
+              ${p.created_at ? fmtDate(p.created_at) : ""}
+              ${p.media_url ? ` • <a class="btn-link" href="${esc(p.media_url)}" target="_blank">фото</a>` : ""}
+            </div>
           </div>
-          <span class="badge">${w.date ? new Date(w.date).toLocaleDateString() : ""}</span>
+          <span class="badge">${p.coach_id ? ("coach_id: " + esc(p.coach_id)) : ""}</span>
         </div>
       `).join("");
-
-    } catch (e) {
+    } catch(e){
       console.error(e);
-      el.innerHTML = `<div class="muted">Пока нет тренировок</div>`;
+      listEl.innerHTML = `<div class="muted">Нет связи с сервером</div>`;
     }
   }
 
-  loadWorkouts();
+  loadPlans();
 </script>
-
 </body>
 </html>

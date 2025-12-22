@@ -1,15 +1,11 @@
-/* Modern sports authentication pages styling */
 
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700;800;900&display=swap");
 
-/* ========== CSS CUSTOM PROPERTIES ========== */
 :root {
-  /* Primary Brand Colors */
   --color-primary: #00d4ff;
   --color-primary-dark: #0099ff;
   --color-primary-darker: #0066ff;
 
-  /* Background Colors */
   --color-bg-gradient-start: #0a0e27;
   --color-bg-gradient-mid: #1a1f3a;
   --color-bg-gradient-end: #0f1419;
@@ -19,7 +15,6 @@
   --color-bg-info: rgba(0, 212, 255, 0.1);
   --color-bg-error: rgba(255, 77, 106, 0.1);
 
-  /* Text Colors */
   --color-text-primary: #ffffff;
   --color-text-secondary: rgba(255, 255, 255, 0.8);
   --color-text-muted: rgba(255, 255, 255, 0.6);
@@ -27,18 +22,15 @@
   --color-text-link: #00d4ff;
   --color-text-link-hover: #00ffff;
 
-  /* Border Colors */
   --color-border: rgba(255, 255, 255, 0.15);
   --color-border-light: rgba(255, 255, 255, 0.1);
   --color-border-focus: #00d4ff;
   --color-border-info: rgba(0, 212, 255, 0.3);
 
-  /* Status Colors */
   --color-error: #ff4d6a;
   --color-error-border: rgba(255, 77, 106, 0.3);
   --color-info: #00d4ff;
 
-  /* Gradients */
   --gradient-bg: linear-gradient(
     135deg,
     var(--color-bg-gradient-start) 0%,
@@ -53,7 +45,6 @@
     var(--color-primary-darker) 100%
   );
 
-  /* Shadows */
   --shadow-primary: 0 8px 32px rgba(0, 153, 255, 0.4);
   --shadow-primary-hover: 0 12px 40px rgba(0, 153, 255, 0.6);
   --shadow-card: 0 24px 80px rgba(0, 0, 0, 0.6);
@@ -78,7 +69,6 @@ body {
   line-height: 1.6;
 }
 
-/* ========== AUTH CONTAINER ========== */
 
 .auth-container {
   width: 100%;
@@ -113,7 +103,6 @@ body {
   text-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
 }
 
-/* ========== AUTH CARD ========== */
 
 .auth-card {
   background: var(--color-bg-card);
@@ -143,7 +132,7 @@ body {
   font-weight: 500;
 }
 
-/* ========== FORM ELEMENTS ========== */
+
 
 .form-group {
   margin-bottom: 24px;
@@ -215,7 +204,6 @@ body {
   color: var(--color-text-primary);
 }
 
-/* ========== BUTTON ========== */
 
 .btn-auth {
   width: 100%;
@@ -244,7 +232,6 @@ body {
   transform: translateY(0);
 }
 
-/* ========== ERROR TEXT ========== */
 
 .error-text {
   color: var(--color-error);
@@ -258,7 +245,6 @@ body {
   border: 1px solid var(--color-error-border);
 }
 
-/* ========== AUTH LINKS ========== */
 
 .auth-links {
   display: flex;
@@ -296,7 +282,6 @@ body {
   width: 100%;
 }
 
-/* ========== LANGUAGE SELECT ========== */
 
 .lang-select-auth {
   width: 100%;
@@ -324,7 +309,6 @@ body {
   color: var(--color-text-primary);
 }
 
-/* ========== CONFIRM SECTION ========== */
 
 .confirm-email {
   padding: 16px;
@@ -365,13 +349,11 @@ body {
   color: var(--color-text-link);
 }
 
-/* ========== UTILITY ========== */
 
 .hidden {
   display: none !important;
 }
 
-/* ========== RESPONSIVE ========== */
 
 @media (max-width: 600px) {
   .auth-container {
