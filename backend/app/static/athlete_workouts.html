@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Мои тренировки</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+</head>
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru" data-i18n="lang_ru">Русский</option>
+      <option value="en" data-i18n="lang_en">English</option>
+      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="page-inner">
+  <div class="page-header-block">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a href="athlete_page.html" class="btn-link">← Назад</a>
+      <h1 class="page-title">Мои тренировки</h1>
+    </div>
+    <div class="page-subtitle">Планы от тренера</div>
+  </div>
+
+  <div class="panel panel--wide">
+    <div class="panel-header">
+      <h2 class="page-subtitle">Запланированные тренировки</h2>
+    </div>
+    <div id="plans" class="list muted">Загрузка...</div>
+  </div>
+</main>
+
+<script>
+  const API = "";
+
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me) location.href = "login.html";
+  if ((me.role || "").toLowerCase() !== "athlete") location.href = "login.html";
+
+  const listEl = document.getElementById("plans");
+
+  function fmtDate(d){
+    try { return new Date(d).toLocaleString(); } catch { return ""; }
+  }
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  async function loadPlans(){
+    listEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+    try{
+      const res = await fetch(`${API}/api/athlete/plans?athlete_id=${encodeURIComponent(me.id)}`, {
+        headers: { "Accept": "application/json" }
+      });
+
+      const data = await res.json().catch(()=>[]);
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      const plans = Array.isArray(data) ? data : [];
+      if (!plans.length){
+        listEl.innerHTML = `<div class="muted">Пока тренировок нет</div>`;
+        return;
+      }
+
+      listEl.innerHTML = plans.map(p => `
+        <div class="list-item">
+          <div style="max-width: 75%;">
+            <div class="list-title">${esc(p.name || "План")}</div>
+            <div class="list-sub">${esc(p.body || "")}</div>
+            <div class="muted" style="font-size:12px;margin-top:6px;">
+              ${p.created_at ? fmtDate(p.created_at) : ""}
+              ${p.media_url ? ` • <a class="btn-link" href="${esc(p.media_url)}" target="_blank">фото</a>` : ""}
+            </div>
+          </div>
+          <span class="badge">${p.coach_id ? ("coach_id: " + esc(p.coach_id)) : ""}</span>
+        </div>
+      `).join("");
+    } catch(e){
+      console.error(e);
+      listEl.innerHTML = `<div class="muted">Нет связи с сервером</div>`;
+    }
+  }
+
+  loadPlans();
+</script>
+</body>
+</html>

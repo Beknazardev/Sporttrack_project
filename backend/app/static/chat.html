@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportTrack — Чат</title>
+    <link rel="stylesheet" href="styles.css" />
+
+    <style>
+      :root {
+        --color-border-light: rgba(255, 255, 255, 0.1);
+        --color-text-primary: #ffffff;
+        --color-text-disabled: rgba(255, 255, 255, 0.6);
+        --color-info-text: #00d4ff;
+        --color-bg-info: rgba(0, 212, 255, 0.1);
+        --color-border-info: rgba(0, 212, 255, 0.3);
+        --gradient-overlay: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+        --color-border: rgba(255, 255, 255, 0.15);
+        --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.4);
+        --gradient-primary: linear-gradient(135deg, #0099ff 0%, #00d4ff 100%);
+        --color-bg-overlay-medium: rgba(255, 255, 255, 0.1);
+        --color-bg-input: rgba(255, 255, 255, 0.05);
+        --color-text-placeholder: rgba(255, 255, 255, 0.4);
+        --color-bg-input-focus: rgba(255, 255, 255, 0.08);
+        --color-border-focus: #00d4ff;
+      }
+
+      .chat-page {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 5%;
+        height: calc(100vh - 160px);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 24px;
+      }
+
+      .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--color-border-light);
+      }
+
+      .chat-header-left h1 {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 42px;
+        font-weight: 900;
+        color: var(--color-text-primary);
+        margin: 0 0 4px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .chat-subtitle {
+        font-size: 14px;
+        color: var(--color-text-disabled);
+        font-weight: 500;
+      }
+
+      .chat-peer {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-info-text);
+        padding: 10px 20px;
+        background: var(--color-bg-info);
+        border: 1px solid var(--color-border-info);
+        border-radius: 10px;
+      }
+
+      .chat-window {
+        background: var(--gradient-overlay);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--color-border);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: var(--shadow-card);
+        overflow-y: auto;
+      }
+
+      .chat-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .chat-msg {
+        max-width: 65%;
+        padding: 12px 18px;
+        border-radius: 18px;
+        font-size: 15px;
+        line-height: 1.5;
+        word-wrap: break-word;
+        animation: slideIn 0.3s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-msg.me {
+        margin-left: auto;
+        background: var(--gradient-primary);
+        color: var(--color-text-primary);
+        text-align: right;
+        box-shadow: 0 4px 16px rgba(0, 153, 255, 0.3);
+      }
+
+      .chat-msg.other {
+        background: var(--color-bg-overlay-medium);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-primary);
+      }
+
+      .chat-msg-time {
+        margin-top: 6px;
+        font-size: 11px;
+        opacity: 0.7;
+        font-weight: 500;
+      }
+
+      .chat-input-row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .chat-input-row .input {
+        flex: 1;
+        padding: 16px 20px;
+        font-size: 15px;
+        font-family: "Outfit", sans-serif;
+        background: var(--color-bg-input);
+        border: 1px solid var(--color-border);
+        border-radius: 14px;
+        color: var(--color-text-primary);
+        outline: none;
+        transition: all 0.3s ease;
+      }
+
+      .chat-input-row .input::placeholder {
+        color: var(--color-text-placeholder);
+      }
+
+      .chat-input-row .input:focus {
+        background: var(--color-bg-input-focus);
+        border-color: var(--color-border-focus);
+        box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.15);
+      }
+
+      .chat-empty {
+        text-align: center;
+        padding: 60px 20px;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+      }
+
+      @media (max-width: 768px) {
+        .chat-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+
+        .chat-msg {
+          max-width: 85%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+
+      <div class="top-bar__lang">
+        <select id="langSelect" class="lang-select">
+          <option value="ru" data-i18n="lang_ru">Русский</option>
+          <option value="en" data-i18n="lang_en">English</option>
+          <option value="kz" data-i18n="lang_kz">Қазақша</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="chat-page">
+      <section class="chat-header">
+        <div class="chat-header-left">
+          <h1>Чат</h1>
+          <p class="chat-subtitle">Общение между тренером и спортсменом</p>
+        </div>
+        <div class="chat-peer" id="chatPeerInfo"></div>
+      </section>
+
+      <section class="chat-window">
+        <div id="chatMessages" class="chat-messages"></div>
+        <div id="chatEmpty" class="chat-empty" style="display: none;">
+          Сообщений пока нет. Напишите первое сообщение
+        </div>
+      </section>
+
+      <section class="chat-input-row">
+        <input
+          id="chatInput"
+          class="input"
+          type="text"
+          placeholder="Написать сообщение..."
+        />
+        <button id="chatSendBtn" class="btn-primary">
+          Отправить
+        </button>
+      </section>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+      const rawUser = localStorage.getItem("user");
+      let currentUser = null;
+
+      try {
+        if (rawUser) currentUser = JSON.parse(rawUser);
+      } catch (e) {
+        console.error("Ошибка парсинга user", e);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const peerId = Number(params.get("peer_id"));
+      const chatMessagesEl = document.getElementById("chatMessages");
+      const chatEmptyEl = document.getElementById("chatEmpty");
+      const peerInfoEl = document.getElementById("chatPeerInfo");
+
+      if (!currentUser || !peerId) {
+        chatMessagesEl.innerHTML =
+          "<p>Нет данных о пользователе или собеседнике.</p>";
+      } else {
+        peerInfoEl.textContent = `Собеседник: ID ${peerId}`;
+        loadHistory();
+      }
+
+      async function loadHistory() {
+        try {
+          const res = await fetch(
+            `/api/chat/history?user_id=${currentUser.id}&peer_id=${peerId}`
+          );
+          if (!res.ok) throw new Error("Ошибка загрузки истории");
+
+          const msgs = await res.json();
+          chatMessagesEl.innerHTML = "";
+
+          if (!msgs.length) {
+            chatEmptyEl.style.display = "block";
+          } else {
+            chatEmptyEl.style.display = "none";
+          }
+
+          msgs.forEach((m) => {
+            addMessage(m.message, m.sender_id === currentUser.id, m.created_at);
+          });
+
+          chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function addMessage(text, isMe, createdAt) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "chat-msg " + (isMe ? "me" : "other");
+
+        const timeStr = createdAt
+          ? new Date(createdAt).toLocaleTimeString()
+          : "";
+
+        wrapper.innerHTML = `
+          <div>${text}</div>
+          <div class="chat-msg-time">${timeStr}</div>
+        `;
+
+        chatMessagesEl.appendChild(wrapper);
+      }
+
+      async function sendMsg() {
+        const input = document.getElementById("chatInput");
+        const text = input.value.trim();
+        if (!text || !currentUser || !peerId) return;
+
+        try {
+          const res = await fetch("/api/chat/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sender_id: currentUser.id,
+              receiver_id: peerId,
+              message: text,
+            }),
+          });
+
+          if (!res.ok) throw new Error("Ошибка отправки сообщения");
+
+          const saved = await res.json();
+
+          addMessage(text, true, saved.created_at);
+          input.value = "";
+          chatEmptyEl.style.display = "none";
+          chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      document
+        .getElementById("chatSendBtn")
+        .addEventListener("click", sendMsg);
+
+      document
+        .getElementById("chatInput")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") sendMsg();
+        });
+
+      setInterval(() => {
+        if (currentUser && peerId) loadHistory();
+      }, 5000);
+    </script>
+  </body>
+</html>

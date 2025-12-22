@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SportTrack — Уведомления</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+
+  <style>
+    .notif-card{
+      padding:16px 18px;
+      border-radius:16px;
+      background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      margin-bottom: 12px;
+    }
+    .notif-top{display:flex; justify-content:space-between; gap:14px; align-items:flex-start;}
+    .notif-left{min-width:0;}
+    .notif-title{font-family:"Rajdhani",sans-serif; font-weight:800; font-size:16px; color:#fff;}
+    .notif-sub{margin-top:6px; color:rgba(255,255,255,.65); font-size:13px; white-space:pre-wrap;}
+    .notif-meta{margin-top:10px; color:rgba(255,255,255,.45); font-size:12px;}
+    .notif-actions{display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+    .notif-badge{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.75);}
+    .notif-unread{box-shadow: 0 0 0 1px rgba(0,212,255,.25) inset;}
+    .details{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+      display:none;
+    }
+    .details.open{display:block;}
+    .details-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+    .thumb img{width:84px; height:84px; border-radius:14px; object-fit:cover; border:1px solid rgba(255,255,255,.12);}
+    .muted12{color:rgba(255,255,255,.55); font-size:12px;}
+  </style>
+</head>
+
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo">SportTrack</div>
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru">Русский</option>
+      <option value="en">English</option>
+      <option value="kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px;">
+    <a href="coach_page.html" class="btn-link">← Назад</a>
+    <h1 class="page-title" style="margin:0;">Уведомления</h1>
+    <div style="width:72px;"></div>
+  </div>
+
+  <div id="notifList" class="list muted">Загрузка...</div>
+</main>
+
+<script>
+  const API = ""; // relative
+  const raw = localStorage.getItem("user");
+  if (!raw) location.href = "login.html";
+  const me = JSON.parse(raw);
+  if ((me.role || "").toLowerCase() !== "coach") location.href = "login.html";
+
+  function fmtDate(d){ try { return new Date(d).toLocaleString(); } catch { return ""; } }
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  async function markRead(id){
+    await fetch(`${API}/api/notifications/${id}/read?user_id=${encodeURIComponent(me.id)}`, {
+      method: "POST",
+      headers: { "Accept": "application/json" }
+    });
+  }
+
+  async function fetchSubmission(submissionId){
+    const res = await fetch(`${API}/api/coach/task-submissions/${encodeURIComponent(submissionId)}?coach_id=${encodeURIComponent(me.id)}`, {
+      headers: { "Accept": "application/json" }
+    });
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+    return data;
+  }
+
+  function renderQuickMeta(n){
+    const meta = n.meta || {};
+    const parts = [];
+    if (meta.task_id) parts.push(`task_id: ${meta.task_id}`);
+    if (meta.athlete_id) parts.push(`athlete_id: ${meta.athlete_id}`);
+    if (meta.submission_id) parts.push(`submission_id: ${meta.submission_id}`);
+    return parts.length ? `<div class="notif-meta">${esc(parts.join(" • "))}</div>` : "";
+  }
+
+  function hasSubmission(n){
+    const meta = n.meta || {};
+    return (n.kind === "task_submitted") && (meta.submission_id || meta.media_url);
+  }
+
+  async function toggleDetails(n, cardEl){
+    const details = cardEl.querySelector(".details");
+    if (!details) return;
+
+    const isOpen = details.classList.contains("open");
+    details.classList.toggle("open");
+    if (isOpen) return;
+
+    if (details.getAttribute("data-loaded") === "1") return;
+
+    const meta = n.meta || {};
+    details.innerHTML = `<div class="muted12">Загрузка деталей...</div>`;
+
+    try{
+      if (meta.submission_id){
+        const sub = await fetchSubmission(meta.submission_id);
+
+        const text = sub.text ? `<div style="margin-top:8px;"><div class="muted12">Текст спортсмена:</div><div style="margin-top:6px; white-space:pre-wrap;">${esc(sub.text)}</div></div>` : "";
+        const photo = sub.media_url ? `
+          <div class="details-row">
+            <div class="thumb"><img src="${esc(sub.media_url)}" alt="photo"></div>
+            <a class="btn-link" href="${esc(sub.media_url)}" target="_blank" rel="noopener">Открыть фото</a>
+          </div>` : `<div class="muted12" style="margin-top:10px;">Фото не прикреплено</div>`;
+
+        details.innerHTML = `
+          <div class="muted12">Отправлено: ${sub.created_at ? esc(fmtDate(sub.created_at)) : "—"}</div>
+          ${text}
+          ${photo}
+        `;
+        details.setAttribute("data-loaded","1");
+        return;
+      }
+
+      if (meta.media_url){
+        details.innerHTML = `
+          <div class="muted12">Фото из meta:</div>
+          <div class="details-row">
+            <div class="thumb"><img src="${esc(meta.media_url)}" alt="photo"></div>
+            <a class="btn-link" href="${esc(meta.media_url)}" target="_blank" rel="noopener">Открыть фото</a>
+          </div>
+        `;
+        details.setAttribute("data-loaded","1");
+        return;
+      }
+
+      details.innerHTML = `<div class="muted12">Нет деталей</div>`;
+      details.setAttribute("data-loaded","1");
+    } catch(e){
+      console.error(e);
+      details.innerHTML = `<div class="muted12">Не удалось загрузить детали (сервер/сеть)</div>`;
+    }
+  }
+
+  async function loadNotifications(){
+    const box = document.getElementById("notifList");
+    box.innerHTML = `<div class="muted">Загрузка...</div>`;
+
+    try{
+      const res = await fetch(`${API}/api/notifications?user_id=${encodeURIComponent(me.id)}&limit=50`, {
+        headers: { "Accept":"application/json" }
+      });
+      if (!res.ok){
+        box.innerHTML = `<div class="muted">Пока уведомлений нет</div>`;
+        return;
+      }
+
+      const data = await res.json().catch(()=>[]);
+      if (!Array.isArray(data) || data.length === 0){
+        box.innerHTML = `<div class="muted">Пока уведомлений нет</div>`;
+        return;
+      }
+
+      box.classList.remove("muted");
+      box.innerHTML = data.map(n => {
+        const unreadClass = n.is_read ? "" : "notif-unread";
+        const op = n.is_read ? "0.75" : "1";
+        const showDetailsBtn = hasSubmission(n);
+
+        return `
+          <div class="notif-card ${unreadClass}" style="opacity:${op}" data-id="${n.id}">
+            <div class="notif-top">
+              <div class="notif-left">
+                <div class="notif-title">${esc(n.title || "Уведомление")}</div>
+                <div class="notif-sub">${esc(n.message || "")}</div>
+                ${renderQuickMeta(n)}
+              </div>
+              <div class="notif-actions">
+                <span class="notif-badge">${n.created_at ? esc(fmtDate(n.created_at)) : ""}</span>
+                ${showDetailsBtn ? `<button class="btn-primary btn-small" type="button">Подробнее</button>` : ``}
+              </div>
+            </div>
+            ${showDetailsBtn ? `<div class="details" data-loaded="0"></div>` : ``}
+          </div>
+        `;
+      }).join("");
+
+      box.querySelectorAll(".notif-card[data-id]").forEach(card => {
+        const id = card.getAttribute("data-id");
+        const notif = data.find(x => String(x.id) === String(id));
+        if (!notif) return;
+
+        card.addEventListener("click", async (ev) => {
+          // если нажали на "Подробнее" — не мешаем
+          if (ev.target && ev.target.tagName === "BUTTON") return;
+
+          try { await markRead(id); } catch {}
+          loadNotifications();
+        });
+
+        const btn = card.querySelector("button");
+        if (btn){
+          btn.addEventListener("click", async (ev) => {
+            ev.stopPropagation();
+            // при открытии тоже можно отметить прочитанным
+            try { await markRead(id); } catch {}
+            await toggleDetails(notif, card);
+            // не перезагружаем весь список, чтобы не схлопывать details
+            card.classList.remove("notif-unread");
+            card.style.opacity = "0.75";
+          });
+        }
+      });
+
+    } catch(e){
+      console.error(e);
+      box.innerHTML = `<div class="muted">Пока уведомлений нет</div>`;
+    }
+  }
+
+  loadNotifications();
+</script>
+</body>
+</html>

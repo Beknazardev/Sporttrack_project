@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Спортсмены</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo">SportTrack</div>
+  <button class="btn-link" onclick="history.back()">← Назад</button>
+</header>
+
+<main class="page-inner">
+  <div class="page-header-block">
+    <h1 class="page-title">Спортсмены</h1>
+    <div class="page-subtitle">Поиск по ID, email или имени спортсмена</div>
+  </div>
+
+  <div class="panel panel--wide">
+    <div class="panel-header">
+      <div class="panel-search-row">
+        <input id="q" class="input input--search" placeholder="ID, email или имя..." />
+        <button id="searchBtn" class="btn-primary" type="button">Найти</button>
+      </div>
+      <div class="search-hint muted">
+        Примеры: <b>15</b> или <b>a2@mail.com</b> или <b>Бекназар</b>
+      </div>
+    </div>
+    <div id="list" class="list"></div>
+  </div>
+
+  <div class="panel panel--wide">
+    <div class="panel-header">
+      <h2 class="page-subtitle">Выбранный спортсмен</h2>
+    </div>
+    <div id="selected" class="muted">Выбери спортсмена из результатов поиска</div>
+  </div>
+
+  <div class="panel panel--wide">
+    <div class="panel-header">
+      <h2 class="page-subtitle">Информация</h2>
+    </div>
+    <div id="info" class="muted">Загружаю список добавленных спортсменов...</div>
+  </div>
+</main>
+
+<script>
+  // ВАЖНО: один порт => только относительные пути
+  const SEARCH_URL = `/api/users/search`;
+
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me || (me.role || "").toLowerCase() !== "coach") location.href = "login.html";
+
+  const qEl = document.getElementById("q");
+  const listEl = document.getElementById("list");
+  const infoEl = document.getElementById("info");
+  const selectedEl = document.getElementById("selected");
+  const searchBtn = document.getElementById("searchBtn");
+
+  let lastResults = [];
+
+  function statusBadge(status){
+    if (status === "accepted") return `<span class="badge success">принят</span>`;
+    if (status === "pending_from_coach" || status === "sent") return `<span class="badge warn">ожидает</span>`;
+    if (status === "declined") return `<span class="badge">отклонён</span>`;
+    return `<span class="badge">нет связи</span>`;
+  }
+
+  function actionsHtml(a){
+    const s = a.link_status || "none";
+    if (s === "none" || s === null) {
+      return `
+        <button type="button" class="btn-primary btn-small"
+          onclick="sendRequest(${a.id}); event.stopPropagation();">
+          Отправить запрос
+        </button>`;
+    }
+    if (s === "pending_from_coach" || s === "sent") {
+      return `<span class="badge warn">ожидает</span>`;
+    }
+    return `
+      <button type="button" class="btn-primary btn-small"
+        onclick="openChat(${a.id}); event.stopPropagation();">
+        Чат
+      </button>`;
+  }
+
+  async function doSearch() {
+    const q = (qEl.value || "").trim();
+    listEl.innerHTML = `<div class="muted">Ищу...</div>`;
+    selectedEl.innerHTML = `<div class="muted">Выбери спортсмена из результатов поиска</div>`;
+
+    if (!q) {
+      listEl.innerHTML = `<div class="muted">Введи ID / email / имя и нажми “Найти”</div>`;
+      return;
+    }
+
+    try {
+      const url = `${SEARCH_URL}?q=${encodeURIComponent(q)}&coach_id=${me.id}`;
+      const res = await fetch(url, { headers: { "Accept": "application/json" } });
+      const data = await res.json().catch(() => ([]));
+
+      if (!res.ok) {
+        listEl.innerHTML = `<div class="muted">Ошибка поиска: ${data?.detail || res.status}</div>`;
+        return;
+      }
+
+      const arr = Array.isArray(data) ? data : [];
+      const athletes = arr.filter(u => (u.role || "").toLowerCase() === "athlete");
+
+      lastResults = athletes;
+      renderList(athletes);
+    } catch (e) {
+      console.error(e);
+      listEl.innerHTML = `<div class="muted">Нет связи с сервером. Проверь, что бэк запущен.</div>`;
+    }
+  }
+
+  function renderList(athletes) {
+    if (!athletes.length) {
+      listEl.innerHTML = `<div class="muted">Ничего не найдено</div>`;
+      return;
+    }
+
+    listEl.innerHTML = athletes.map(a => {
+      const fullName = `${a.username ?? ""} ${a.last_name ?? ""}`.trim() || "Без имени";
+      const s = a.link_status || "none";
+
+      return `
+        <div class="list-item" onclick="showSelected(${a.id})" style="cursor:pointer;">
+          <div>
+            <div class="list-title">${fullName} ${statusBadge(s)}</div>
+            <div class="list-sub">${a.email ?? ""} • ${a.sport ?? "—"}</div>
+          </div>
+          <div onclick="event.stopPropagation()">${actionsHtml(a)}</div>
+        </div>`;
+    }).join("");
+  }
+
+  window.showSelected = function(id){
+    const a = lastResults.find(x => x.id === id);
+    if (!a) return;
+
+    const s = a.link_status || "none";
+    selectedEl.innerHTML = `
+      <div class="info-card">
+        <div><b>ID:</b> ${a.id ?? ""}</div>
+        <div><b>Имя:</b> ${a.username ?? ""}</div>
+        <div><b>Фамилия:</b> ${a.last_name ?? ""}</div>
+        <div><b>Email:</b> ${a.email ?? ""}</div>
+        <div><b>Вид спорта:</b> ${a.sport ?? "—"}</div>
+        <div><b>Статус:</b> ${s}</div>
+        <div style="margin-top:10px;">${actionsHtml(a)}</div>
+      </div>`;
+  };
+
+  async function loadMyAthletes(){
+    infoEl.innerHTML = `<div class="muted">Загружаю добавленных спортсменов...</div>`;
+
+    try {
+      const res = await fetch(`/api/coach/athletes?coach_id=${me.id}&status=accepted`);
+      const data = await res.json().catch(()=>[]);
+
+      if (!res.ok) {
+        infoEl.innerHTML = `<div class="muted">Ошибка списка: ${data?.detail || res.status}</div>`;
+        return;
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        infoEl.innerHTML = `<div class="muted">Пока нет добавленных спортсменов</div>`;
+        return;
+      }
+
+      infoEl.innerHTML = `
+        <div class="info-card">
+          <div style="margin-bottom:10px;"><b>Мои спортсмены</b></div>
+          ${data.map(a => `
+            <div class="list-item">
+              <div>
+                <div class="list-title">${(a.username || "Без имени")} <span class="badge success">принят</span></div>
+                <div class="list-sub">${a.email || ""} • ${a.sport || "—"} • ID: ${a.id}</div>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn-primary btn-small" onclick="openChat(${a.id})">Чат</button>
+                <button type="button" class="btn-small-outline" onclick="removeMyAthlete(${a.id})">Удалить</button>
+              </div>
+            </div>
+          `).join("")}
+        </div>`;
+    } catch (e) {
+      console.error(e);
+      infoEl.innerHTML = `<div class="muted">Нет связи с сервером.</div>`;
+    }
+  }
+
+  window.removeMyAthlete = async function(athleteId){
+    if (!confirm("Удалить спортсмена из списка?")) return;
+
+    const res = await fetch(`/api/coach/athletes/remove`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ coach_id: me.id, athlete_id: athleteId })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      alert(err.detail || ("Ошибка удаления: " + res.status));
+      return;
+    }
+    loadMyAthletes();
+  };
+
+  window.sendRequest = async function(athleteId){
+    const res = await fetch(`/api/coach/request`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ athlete_id: athleteId, coach_id: me.id })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      alert(err.detail || ("Ошибка отправки: " + res.status));
+      return;
+    }
+
+    alert("Запрос отправлен");
+    doSearch();
+    loadMyAthletes();
+  };
+
+  window.openChat = function(athleteId){
+    alert("Открыть чат со спортсменом ID: " + athleteId);
+  };
+
+  searchBtn.addEventListener("click", doSearch);
+  qEl.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+
+  listEl.innerHTML = `<div class="muted">Введи запрос сверху и нажми “Найти”.</div>`;
+  loadMyAthletes();
+</script>
+</body>
+</html>
+

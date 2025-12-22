@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Регистрация</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+
+<body>
+  <div class="auth-container">
+    <div class="auth-logo">SPORTTRACK</div>
+
+    <div class="auth-card" id="emailSection">
+      <h1 class="auth-title">Регистрация</h1>
+      <p class="auth-subtitle">Сначала подтвердите почту</p>
+
+      <div class="form-group">
+        <label class="form-label">Почта</label>
+        <input type="email" id="email" class="form-input" placeholder="example@mail.com">
+      </div>
+
+      <select id="langSelect" class="lang-select-auth">
+        <option value="ru">Русский</option>
+        <option value="kz">Қазақ</option>
+        <option value="en">English</option>
+      </select>
+
+      <button id="sendCodeBtn" class="btn-auth">Отправить код</button>
+      <p id="emailError" class="error-text"></p>
+
+      <div class="auth-links">
+        <a href="login.html" class="auth-link">Уже есть аккаунт? Войти</a>
+      </div>
+    </div>
+
+    <div class="auth-card hidden" id="confirmSection">
+      <h1 class="auth-title">Подтверждение</h1>
+      <p class="auth-subtitle">Введите код из письма</p>
+
+      <div class="confirm-email">
+        <strong>Email:</strong> <span id="confirmEmailText"></span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Код подтверждения</label>
+        <input type="text" id="confirmCode" class="form-input confirm-code-input" placeholder="123456">
+      </div>
+
+      <button id="confirmBtn" class="btn-auth">Подтвердить</button>
+      <button id="resendBtn" class="btn-auth" style="margin-top:10px;">Отправить код ещё раз</button>
+
+      <p id="confirmError" class="error-text"></p>
+      <a href="#" id="backToEmail" class="back-link">← Назад</a>
+    </div>
+
+    <div class="auth-card hidden" id="dataSection">
+      <h1 class="auth-title">Данные аккаунта</h1>
+      <p class="auth-subtitle">Почта подтверждена — заполните профиль</p>
+
+      <div class="confirm-email">
+        <strong>Email:</strong> <span id="dataEmailText"></span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Имя</label>
+          <input type="text" id="username" class="form-input" placeholder="Имя">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Фамилия</label>
+          <input type="text" id="lastname" class="form-input" placeholder="Фамилия">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input type="password" id="password" class="form-input" placeholder="••••••••">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Вид спорта</label>
+        <input type="text" id="sportInput" class="form-input" placeholder="Футбол, Бокс, Теннис...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Роль</label>
+        <select id="role" class="form-select">
+          <option value="athlete">Спортсмен</option>
+          <option value="coach">Тренер</option>
+          <option value="admin">Админ</option>
+        </select>
+      </div>
+
+      <button id="registerBtn" class="btn-auth">Зарегистрироваться</button>
+      <p id="registerError" class="error-text"></p>
+
+      <a href="#" id="backToConfirm" class="back-link">← Назад</a>
+    </div>
+
+  </div>
+
+  <script src="lang.js"></script>
+  <script src="auth_register.js"></script>
+</body>
+</html>
+

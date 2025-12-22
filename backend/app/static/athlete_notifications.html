@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Уведомления</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo">SportTrack</div>
+  <button class="btn-link" onclick="history.back()">← Назад</button>
+</header>
+
+<main class="page-inner">
+  <div class="page-header-block">
+    <h1 class="page-title">Уведомления</h1>
+    <div class="page-subtitle">Запросы от тренеров и системные сообщения</div>
+  </div>
+
+  <div class="panel panel--wide">
+    <div class="panel-header">
+      <h2 class="page-subtitle">Запросы от тренеров</h2>
+    </div>
+    <div id="requests" class="list muted">Загрузка...</div>
+  </div>
+
+  <div class="panel panel--wide">
+    <div class="panel-header">
+      <h2 class="page-subtitle">Все уведомления</h2>
+    </div>
+    <div id="notifs" class="list muted">Загрузка...</div>
+  </div>
+</main>
+
+<script>
+  const API = "";
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me) location.href = "login.html";
+  if ((me.role || "").toLowerCase() !== "athlete") location.href = "login.html";
+
+  const reqEl = document.getElementById("requests");
+  const notEl = document.getElementById("notifs");
+
+  function fmtDate(d){ try { return new Date(d).toLocaleString(); } catch { return ""; } }
+  function safeMeta(meta){
+    if (!meta) return {};
+    if (typeof meta === "object") return meta;
+    try { return JSON.parse(meta); } catch { return {}; }
+  }
+
+  async function fetchNotifications(){
+    const res = await fetch(`${API}/api/notifications?user_id=${me.id}&limit=50`, {
+      headers: { "Accept": "application/json" }
+    });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+    return Array.isArray(data) ? data : [];
+  }
+
+  window.markRead = async function(notifId){
+    try{
+      await fetch(`${API}/api/notifications/${notifId}/read?user_id=${me.id}`, { method: "POST" });
+      loadAll();
+    } catch(e){ console.error(e); }
+  }
+
+  window.respond = async function(coachId, decision, notifId){
+    try{
+      const res = await fetch(`${API}/api/athlete/coach-request/respond`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ athlete_id: me.id, coach_id: coachId, decision })
+      });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok){ alert(data.detail || ("Ошибка: " + res.status)); return; }
+
+      if (notifId) await fetch(`${API}/api/notifications/${notifId}/read?user_id=${me.id}`, { method: "POST" });
+
+      await loadAll();
+      alert(decision === "accepted" ? "Запрос принят" : "Запрос отклонён");
+    } catch(e){
+      console.error(e);
+      alert("Нет связи с сервером");
+    }
+  }
+
+  async function loadAll(){
+    reqEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+    notEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+
+    try {
+      const notifs = await fetchNotifications();
+
+      const requests = notifs.filter(n => (n.kind || "") === "coach_request");
+
+      if (!requests.length){
+        reqEl.innerHTML = `<div class="muted">Пока запросов нет</div>`;
+      } else {
+        reqEl.innerHTML = requests.map(n => {
+          const meta = safeMeta(n.meta);
+          const coachId = meta.coach_id;
+          const disabled = !coachId ? "disabled" : "";
+          return `
+            <div class="list-item">
+              <div>
+                <div class="list-title">${n.title || "Запрос"} ${n.is_read ? "" : `<span class="badge warn">new</span>`}</div>
+                <div class="list-sub">${n.message || ""}</div>
+                <div class="muted" style="font-size:12px;margin-top:6px;">${fmtDate(n.created_at)}</div>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <button class="btn-primary btn-small" ${disabled} onclick="respond(${coachId || 0}, 'accepted', ${n.id})">Принять</button>
+                <button class="btn-small-outline" ${disabled} onclick="respond(${coachId || 0}, 'declined', ${n.id})">Отклонить</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      if (!notifs.length){
+        notEl.innerHTML = `<div class="muted">Пока уведомлений нет</div>`;
+      } else {
+        notEl.innerHTML = notifs.map(n => `
+          <div class="list-item" style="cursor:pointer;" onclick="markRead(${n.id})">
+            <div>
+              <div class="list-title">${n.title || "Уведомление"} ${n.is_read ? "" : `<span class="badge warn">new</span>`}</div>
+              <div class="list-sub">${n.message || ""}</div>
+            </div>
+            <span class="badge">${fmtDate(n.created_at)}</span>
+          </div>
+        `).join("");
+      }
+    } catch (e){
+      console.error(e);
+      reqEl.innerHTML = `<div class="muted">Ошибка загрузки</div>`;
+      notEl.innerHTML = `<div class="muted">Ошибка загрузки</div>`;
+    }
+  }
+
+  loadAll();
+</script>
+</body>
+</html>

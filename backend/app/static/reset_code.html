@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Подтверждение кода</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+
+<body>
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="auth-logo">SPORTTRACK</div>
+    <div class="lang-switcher">
+      <span class="active">RU</span>
+      <span>|</span>
+      <span>KZ</span>
+      <span>|</span>
+      <span>EN</span>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <section class="auth-card">
+      <h1 class="auth-title">Подтверждение кода</h1>
+      <p class="auth-subtitle">
+        Введите код, отправленный на вашу почту
+      </p>
+
+      <form class="auth-form" onsubmit="return false;">
+        <label class="auth-label" for="reset_code">Код</label>
+
+        <input
+          id="reset_code"
+          type="text"
+          class="auth-input"
+          placeholder="000000"
+          maxlength="6"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+        >
+
+        <button class="btn-auth btn" type="button">
+          Продолжить
+        </button>
+
+        <p class="auth-link-text small-text">
+          Не получили код?
+          <a href="#" class="auth-link link">Отправить ещё раз</a>
+        </p>
+
+        <p id="resetCodeStatus" class="status"></p>
+      </form>
+    </section>
+  </main>
+
+  <script src="reset_password.js"></script>
+</body>
+</html>

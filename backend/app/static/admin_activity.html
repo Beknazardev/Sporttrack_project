@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Статистика активности</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+
+  <!-- Chart.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    .page-wrap { max-width: 1100px; margin: 0 auto; }
+    .back-row { display:flex; align-items:center; gap:16px; margin: 12px 0 20px; }
+    .title-big { font-family:"Rajdhani",sans-serif; font-size:44px; font-weight:900; letter-spacing:1px; margin:0; }
+
+    .hint { color: rgba(255,255,255,.55); font-size: 12px; margin: 2px 0 0; }
+
+    .cards {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin: 18px 0 18px;
+    }
+    @media (max-width: 980px){
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px){
+      .cards { grid-template-columns: 1fr; }
+      .title-big { font-size: 34px; }
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, rgba(0,153,255,.14), rgba(0,212,255,.06));
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(0,212,255,.18);
+      border-radius: 18px;
+      padding: 18px 18px;
+      text-align: center;
+      box-shadow: 0 12px 50px rgba(0,0,0,.25);
+      min-height: 130px;
+      display:flex;
+      flex-direction: column;
+      justify-content:center;
+      gap: 8px;
+    }
+    .stat-emoji { font-size: 26px; opacity: .95; }
+    .stat-value {
+      font-family:"Rajdhani",sans-serif;
+      font-size: 44px;
+      font-weight: 900;
+      color: #00d4ff;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,.75);
+      text-transform: uppercase;
+    }
+
+    .grid2 { display:grid; grid-template-columns: 1fr; gap: 18px; }
+    .panel-pad { padding: 18px 18px; border-radius: 22px; }
+    .panel-title { margin: 0; font-size: 16px; color: rgba(255,255,255,.9); }
+    .panel-sub { margin: 6px 0 0; font-size: 12px; color: rgba(255,255,255,.55); }
+
+    .canvas-wrap {
+      margin-top: 14px;
+      background: rgba(0,0,0,.14);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .row-between { display:flex; align-items:center; justify-content:space-between; gap: 12px; flex-wrap: wrap; }
+    .pill {
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.8);
+      display:inline-flex;
+      gap: 8px;
+      align-items:center;
+      user-select:none;
+    }
+    .pill b { color: #00d4ff; }
+
+    .statusline {
+      margin-top: 10px;
+      font-size: 13px;
+      color: rgba(255,255,255,.65);
+    }
+    .statusline.error { color: rgba(255,170,170,.95); }
+    .statusline.success { color: rgba(170,255,200,.95); }
+  </style>
+</head>
+
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru" data-i18n="lang_ru">Русский</option>
+      <option value="en" data-i18n="lang_en">English</option>
+      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-wrap">
+
+    <div class="back-row">
+      <a href="admin_page.html" class="btn-link">← Назад</a>
+      <div>
+        <h1 class="title-big">СТАТИСТИКА АКТИВНОСТИ</h1>
+        <div class="hint">Данные берутся из <b>/api/admin/activity-stats?admin_id=...</b></div>
+      </div>
+    </div>
+
+    <section class="cards">
+      <div class="stat-card">
+        <div class="stat-emoji">👥</div>
+        <div class="stat-value" id="vUsers">—</div>
+        <div class="stat-label">всего пользователей</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-emoji">🏃</div>
+        <div class="stat-value" id="vAthletes">—</div>
+        <div class="stat-label">спортсменов</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-emoji">🧑‍🏫</div>
+        <div class="stat-value" id="vCoaches">—</div>
+        <div class="stat-label">тренеров</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-emoji">💪</div>
+        <div class="stat-value" id="vTrainings">—</div>
+        <div class="stat-label">тренировок</div>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <section class="panel panel-pad">
+        <div class="row-between">
+          <div>
+            <h2 class="panel-title">Активность пользователей</h2>
+            <div class="panel-sub">Сколько админ-действий по дням (таблица admin_activity)</div>
+          </div>
+          <div class="pill">точка данных: <b id="pActivityN">0</b></div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="activityChart" height="140"></canvas>
+        </div>
+      </section>
+
+      <section class="panel panel-pad">
+        <div class="row-between">
+          <div>
+            <h2 class="panel-title">Регистрации по месяцам</h2>
+            <div class="panel-sub">Сколько пользователей зарегистрировались по месяцам (таблица users)</div>
+          </div>
+          <div class="pill">месяцев: <b id="pRegN">0</b></div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="regChart" height="140"></canvas>
+        </div>
+      </section>
+    </section>
+
+    <div id="statusLine" class="statusline">Загрузка…</div>
+
+  </div>
+</main>
+
+<script>
+  const API = "";
+
+  const raw = localStorage.getItem("user");
+  if (!raw) location.href = "login.html";
+  const me = JSON.parse(raw);
+
+  if ((me.role || "").toLowerCase() !== "admin") location.href = "login.html";
+
+  const elUsers = document.getElementById("vUsers");
+  const elAthletes = document.getElementById("vAthletes");
+  const elCoaches = document.getElementById("vCoaches");
+  const elTrainings = document.getElementById("vTrainings");
+  const statusLine = document.getElementById("statusLine");
+
+  const pillActivityN = document.getElementById("pActivityN");
+  const pillRegN = document.getElementById("pRegN");
+
+  let activityChart = null;
+  let regChart = null;
+
+  function setStatus(text, ok=null){
+    statusLine.textContent = text;
+    statusLine.classList.remove("error","success");
+    if (ok === true) statusLine.classList.add("success");
+    if (ok === false) statusLine.classList.add("error");
+  }
+
+  function safeNum(x){
+    const n = Number(x);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function renderActivityChart(activityArr){
+    const arr = Array.isArray(activityArr) ? activityArr : [];
+    pillActivityN.textContent = String(arr.length);
+
+    const labels = arr.map(a => String(a.date ?? ""));
+    const values = arr.map(a => safeNum(a.count));
+
+    const ctx = document.getElementById("activityChart").getContext("2d");
+    if (activityChart) activityChart.destroy();
+
+    activityChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Активность",
+          data: values,
+          borderColor: "#00d4ff",
+          backgroundColor: "rgba(0,212,255,0.18)",
+          tension: 0.35,
+          fill: true,
+          pointRadius: 3,
+          pointHoverRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          x: {
+            ticks: { color: "rgba(255,255,255,.65)" },
+            grid: { color: "rgba(255,255,255,.06)" }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: "rgba(255,255,255,.65)" },
+            grid: { color: "rgba(255,255,255,.06)" }
+          }
+        }
+      }
+    });
+  }
+
+  function renderRegChart(regArr){
+    const arr = Array.isArray(regArr) ? regArr : [];
+    pillRegN.textContent = String(arr.length);
+
+    const labels = arr.map(r => String(r.month ?? ""));
+    const values = arr.map(r => safeNum(r.count));
+
+    const ctx = document.getElementById("regChart").getContext("2d");
+    if (regChart) regChart.destroy();
+
+    regChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Регистрации",
+          data: values,
+          backgroundColor: "rgba(77,166,255,0.7)",
+          borderColor: "rgba(77,166,255,1)",
+          borderWidth: 1,
+          borderRadius: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          x: {
+            ticks: { color: "rgba(255,255,255,.65)" },
+            grid: { color: "rgba(255,255,255,.06)" }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: "rgba(255,255,255,.65)" },
+            grid: { color: "rgba(255,255,255,.06)" }
+          }
+        }
+      }
+    });
+  }
+
+  async function loadStats(){
+    setStatus("Загрузка статистики…");
+    try{
+      const res = await fetch(`${API}/api/admin/activity-stats?admin_id=${encodeURIComponent(me.id)}`, {
+        headers: { "Accept": "application/json" }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+
+      const cards = data.cards || {};
+      elUsers.textContent = safeNum(cards.total_users);
+      elAthletes.textContent = safeNum(cards.athletes);
+      elCoaches.textContent = safeNum(cards.coaches);
+      elTrainings.textContent = safeNum(cards.trainings);
+
+      renderActivityChart(data.activity || []);
+      renderRegChart(data.registrations || []);
+
+      setStatus("Готово ✅", true);
+    } catch(e){
+      console.error(e);
+      elUsers.textContent = "0";
+      elAthletes.textContent = "0";
+      elCoaches.textContent = "0";
+      elTrainings.textContent = "0";
+
+      // пустые графики (чтобы не падало)
+      renderActivityChart([]);
+      renderRegChart([]);
+
+      setStatus("Ошибка загрузки (проверь сервер/endpoint) ❌", false);
+    }
+  }
+
+  loadStats();
+</script>
+</body>
+</html>

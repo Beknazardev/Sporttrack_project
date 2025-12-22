@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SportTrack — Задачи</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo">SportTrack</div>
+  <button class="btn-link" onclick="history.back()">← Назад</button>
+</header>
+
+<main class="page">
+  <h1 class="page-title">Выдать задание</h1>
+
+  <div class="panel">
+    <label class="label">Спортсмен</label>
+    <select id="athleteSelect" class="input"></select>
+
+    <label class="label">Название задания</label>
+    <input id="title" class="input" placeholder="Например: Бег 3 км" />
+
+    <label class="label">Описание</label>
+    <textarea id="desc" class="input" rows="4" placeholder="Детали, подходы, время..."></textarea>
+
+    <label class="label">Дедлайн</label>
+    <input id="due" class="input" type="date" />
+
+    <label class="label">Фото (необязательно)</label>
+    <input id="media" class="input" type="file" accept="image/*" />
+
+    <div class="row">
+      <button id="sendBtn" class="btn-primary" type="button">Отправить</button>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="page-subtitle">Мои отправленные задания</h2>
+    <div id="tasksList" class="list muted">Загрузка...</div>
+  </div>
+</main>
+
+<script>
+  // один порт -> relative
+  const API = "";
+
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me || (me.role || "").toLowerCase() !== "coach") location.href = "login.html";
+
+  const sel = document.getElementById("athleteSelect");
+  const statusEl = document.getElementById("status");
+  const listEl = document.getElementById("tasksList");
+
+  let athletesMap = {}; // { athleteId: "Имя Фамилия • email" }
+
+  function setStatus(text, ok=false){
+    statusEl.textContent = text;
+    statusEl.className = "status " + (ok ? "success" : "error");
+  }
+
+  function fmtDate(d){
+    try { return new Date(d).toLocaleString(); } catch { return ""; }
+  }
+
+  function statusBadge(s){
+    s = (s || "").toLowerCase();
+    if (s === "sent") return `<span class="badge warn">отправлено</span>`;
+    if (s === "done") return `<span class="badge success">выполнено</span>`;
+    if (s === "rated") return `<span class="badge success">оценено</span>`;
+    return `<span class="badge">${s || "—"}</span>`;
+  }
+
+  async function fillAthletes(){
+    sel.innerHTML = `<option value="">Загрузка...</option>`;
+    try{
+      const res = await fetch(`${API}/api/coach/athletes?coach_id=${me.id}&status=accepted`);
+      const data = await res.json().catch(() => []);
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      const athletes = Array.isArray(data) ? data : [];
+      if (!athletes.length){
+        sel.innerHTML = `<option value="">Нет принятых спортсменов</option>`;
+        return;
+      }
+
+      athletesMap = {};
+      athletes.forEach(a => {
+        const label = `${(a.username||"Без имени")} ${(a.last_name||"")}`.trim()
+          + (a.email ? ` • ${a.email}` : "");
+        athletesMap[a.id] = label;
+      });
+
+      sel.innerHTML = athletes.map(a =>
+        `<option value="${a.id}">${athletesMap[a.id]}</option>`
+      ).join("");
+
+    } catch(e){
+      console.error(e);
+      sel.innerHTML = `<option value="">Ошибка загрузки</option>`;
+      setStatus("Не удалось загрузить список спортсменов");
+    }
+  }
+
+  async function uploadIfNeeded(){
+    const file = document.getElementById("media").files?.[0];
+    if (!file) return null;
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    const res = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.detail || ("Upload HTTP " + res.status));
+
+    // backend возвращает { url: "/uploads/xxx" }
+    return data.url || null;
+  }
+
+  async function loadMyTasks(){
+    listEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+    try{
+      const res = await fetch(`${API}/api/coach/tasks?coach_id=${me.id}`);
+      const data = await res.json().catch(() => []);
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      const tasks = Array.isArray(data) ? data : [];
+      if (!tasks.length){
+        listEl.innerHTML = `<div class="muted">Пока заданий нет</div>`;
+        return;
+      }
+
+      listEl.innerHTML = tasks.map(t => {
+        const athleteLabel = athletesMap[t.athlete_id] || `athlete_id: ${t.athlete_id}`;
+        const media = t.media_url
+          ? `<div class="muted" style="margin-top:8px;">
+               <a class="btn-link" href="${t.media_url}" target="_blank" rel="noopener">Открыть фото</a>
+             </div>`
+          : "";
+
+        const due = t.due_date ? `<span class="badge">до ${t.due_date}</span>` : "";
+
+        return `
+          <div class="list-item">
+            <div>
+              <div class="list-title">
+                ${t.title || "Без названия"}
+                ${statusBadge(t.status)}
+              </div>
+              <div class="list-sub">
+                ${athleteLabel}
+                ${t.created_at ? ` • ${fmtDate(t.created_at)}` : ""}
+              </div>
+              <div class="muted" style="margin-top:6px;">${t.description || ""}</div>
+              <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                ${due}
+                <span class="badge">id: ${t.id}</span>
+              </div>
+              ${media}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+    } catch(e){
+      console.error(e);
+      listEl.innerHTML = `<div class="muted">Ошибка загрузки заданий</div>`;
+    }
+  }
+
+  document.getElementById("sendBtn").onclick = async () => {
+    const athlete_id = Number(sel.value || 0);
+    const title = document.getElementById("title").value.trim();
+    const description = document.getElementById("desc").value.trim();
+    const due_date = document.getElementById("due").value || null;
+
+    statusEl.textContent = "";
+    statusEl.className = "status";
+
+    if (!athlete_id || !title || !description) {
+      return setStatus("Заполни спортсмена/название/описание");
+    }
+
+    try{
+      setStatus("Отправляю...", true);
+
+      const media_url = await uploadIfNeeded();
+
+      const res = await fetch(`${API}/api/coach/tasks`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          coach_id: me.id,
+          athlete_id,
+          title,
+          description,
+          due_date,
+          media_url
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.detail || ("HTTP " + res.status));
+
+      setStatus("Задание отправлено ✅", true);
+
+      document.getElementById("title").value = "";
+      document.getElementById("desc").value = "";
+      document.getElementById("due").value = "";
+      document.getElementById("media").value = "";
+
+      await loadMyTasks();
+
+    } catch(e){
+      console.error(e);
+      setStatus(e.message || "Ошибка отправки");
+    }
+  };
+
+  (async () => {
+    await fillAthletes();
+    await loadMyTasks();
+  })();
+</script>
+</body>
+</html>
+(function () {
+  const dict = {
+    ru: {
+      app_title: "SportTrack",
+      back: "← Назад",
+      // добавляй по мере надобности
+    },
+    en: {
+      app_title: "SportTrack",
+      back: "← Back",
+    },
+    kz: {
+      app_title: "SportTrack",
+      back: "← Артқа",
+    },
+  };
+
+  function getLang() {
+    return localStorage.getItem("lang") || "ru";
+  }
+
+  function applyLang(lang) {
+    const d = dict[lang] || dict.ru;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      if (d[key] != null) el.textContent = d[key];
+    });
+  }
+
+  window.setLang = function (lang) {
+    localStorage.setItem("lang", lang);
+    applyLang(lang);
+  };
+
+  window.initLang = function () {
+    const select = document.getElementById("langSelect");
+    const lang = getLang();
+    if (select) {
+      select.value = lang;
+      select.addEventListener("change", () => setLang(select.value));
+    }
+    applyLang(lang);
+  };
+
+  document.addEventListener("DOMContentLoaded", initLang);
+})();

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTrack — Планы тренировок</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo">SportTrack</div>
+  <button class="btn-link" onclick="history.back()">← Назад</button>
+</header>
+
+<main class="page">
+  <h1 class="page-title">Планы тренировок</h1>
+
+  <div class="panel">
+    <label class="label">Спортсмен</label>
+    <select id="athleteSelect" class="input"></select>
+
+    <label class="label">Название плана</label>
+    <input id="planName" class="input" placeholder="Например: Подготовка 4 недели" />
+
+    <label class="label">Содержание (по дням)</label>
+    <textarea id="planBody" class="input" rows="6" placeholder="День 1: ...&#10;День 2: ..."></textarea>
+
+    <label class="label">Фото (необязательно)</label>
+    <input id="media" class="input" type="file" accept="image/*" />
+
+    <div class="row">
+      <button id="saveBtn" class="btn-primary">Сохранить</button>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="page-subtitle">Созданные планы</h2>
+    <div id="plansList" class="list muted">Загрузка...</div>
+  </div>
+</main>
+
+<script>
+  const API = "";
+  const me = JSON.parse(localStorage.getItem("user") || "null");
+  if (!me || (me.role || "").toLowerCase() !== "coach") location.href = "login.html";
+
+  const sel = document.getElementById("athleteSelect");
+  const statusEl = document.getElementById("status");
+  const listEl = document.getElementById("plansList");
+
+  function setStatus(text, ok=false){
+    statusEl.textContent = text;
+    statusEl.className = "status " + (ok ? "success" : "error");
+  }
+
+  async function loadAthletes(){
+    sel.innerHTML = `<option value="">Загрузка...</option>`;
+    const res = await fetch(`${API}/api/coach/athletes?coach_id=${me.id}&status=accepted`);
+    const data = await res.json().catch(()=>[]);
+    if (!res.ok) { sel.innerHTML = `<option value="">Ошибка</option>`; return; }
+    if (!Array.isArray(data) || data.length === 0){
+      sel.innerHTML = `<option value="">Нет спортсменов</option>`;
+      return;
+    }
+    sel.innerHTML = data.map(a =>
+      `<option value="${a.id}">${(a.username||"Без имени")} ${(a.last_name||"")}</option>`
+    ).join("");
+  }
+
+  async function uploadIfNeeded(){
+    const f = document.getElementById("media").files?.[0];
+    if (!f) return null;
+
+    const fd = new FormData();
+    fd.append("file", f);
+
+    const res = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok) throw new Error(data.detail || ("HTTP " + res.status));
+    return data.url;
+  }
+
+  async function loadPlans(){
+    listEl.innerHTML = `<div class="muted">Загрузка...</div>`;
+    const res = await fetch(`${API}/api/coach/plans?coach_id=${me.id}`);
+    const data = await res.json().catch(()=>[]);
+    if (!res.ok){
+      listEl.innerHTML = `<div class="muted">Ошибка загрузки</div>`;
+      return;
+    }
+    if (!Array.isArray(data) || data.length === 0){
+      listEl.innerHTML = `<div class="muted">Планов пока нет</div>`;
+      return;
+    }
+    listEl.innerHTML = data.map(p => `
+      <div class="list-item">
+        <div>
+          <div class="list-title">${p.name || "План"}</div>
+          <div class="list-sub">athlete_id: ${p.athlete_id} • ${p.created_at ? new Date(p.created_at).toLocaleString() : ""}</div>
+          <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-small-outline" type="button" onclick='alert(${JSON.stringify(p.body || "")})'>Посмотреть</button>
+            ${p.media_url ? `<a class="btn-small-outline" href="${p.media_url}" target="_blank">Открыть фото</a>` : ""}
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("saveBtn").onclick = async () => {
+    statusEl.textContent = ""; statusEl.className = "status";
+
+    const athlete_id = Number(sel.value || 0);
+    const name = document.getElementById("planName").value.trim();
+    const body = document.getElementById("planBody").value.trim();
+
+    if (!athlete_id || !name || !body) return setStatus("Заполни спортсмена/название/содержание");
+
+    try{
+      const media_url = await uploadIfNeeded();
+
+      const res = await fetch(`${API}/api/coach/plans`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ coach_id: me.id, athlete_id, name, body, media_url })
+      });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) return setStatus(data.detail || ("Ошибка: " + res.status));
+
+      setStatus("План сохранён ✅", true);
+      document.getElementById("planName").value = "";
+      document.getElementById("planBody").value = "";
+      document.getElementById("media").value = "";
+
+      await loadPlans();
+    } catch(e){
+      console.error(e);
+      setStatus("Ошибка сохранения: " + (e.message || ""));
+    }
+  };
+
+  loadAthletes();
+  loadPlans();
+</script>
+</body>
+</html>
+(function () {
+  const dict = {
+    ru: {
+      app_title: "SportTrack",
+      back: "← Назад",
+      // добавляй по мере надобности
+    },
+    en: {
+      app_title: "SportTrack",
+      back: "← Back",
+    },
+    kz: {
+      app_title: "SportTrack",
+      back: "← Артқа",
+    },
+  };
+
+  function getLang() {
+    return localStorage.getItem("lang") || "ru";
+  }
+
+  function applyLang(lang) {
+    const d = dict[lang] || dict.ru;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      if (d[key] != null) el.textContent = d[key];
+    });
+  }
+
+  window.setLang = function (lang) {
+    localStorage.setItem("lang", lang);
+    applyLang(lang);
+  };
+
+  window.initLang = function () {
+    const select = document.getElementById("langSelect");
+    const lang = getLang();
+    if (select) {
+      select.value = lang;
+      select.addEventListener("change", () => setLang(select.value));
+    }
+    applyLang(lang);
+  };
+
+  document.addEventListener("DOMContentLoaded", initLang);
+})();

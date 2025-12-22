@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SportTrack — Кабинет тренера</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="lang.js"></script>
+
+  <style>
+    /* чтобы карточки меню 100% были кликабельные */
+    .coach-menu__item{ display:flex; text-decoration:none; cursor:pointer; }
+    .coach-menu__item *{ pointer-events:none; }
+    .coach-menu__item{ pointer-events:auto; }
+  </style>
+</head>
+
+<body>
+<header class="top-bar">
+  <div class="top-bar__logo" data-i18n="app_title">SportTrack</div>
+  <div class="top-bar__lang">
+    <select id="langSelect" class="lang-select">
+      <option value="ru" data-i18n="lang_ru">Русский</option>
+      <option value="en" data-i18n="lang_en">English</option>
+      <option value="kz" data-i18n="lang_kz">Қазақша</option>
+    </select>
+  </div>
+</header>
+
+<main class="coach-layout coach-layout--dashboard">
+
+  <!-- Left profile card -->
+  <section class="panel coach-card coach-card--dashboard">
+    <div class="coach-card__top">
+      <div class="coach-avatar coach-avatar--coach">
+        <span id="coachAvatarLetter" class="coach-avatar__text">C</span>
+      </div>
+
+      <div class="coach-card__info">
+        <h1 id="coachName" class="coach-name">—</h1>
+
+        <p class="coach-status">
+          <span>Статус:</span> <strong>тренер</strong>
+        </p>
+
+        <button id="editProfileBtn" class="btn-link">Редактировать профиль</button>
+      </div>
+    </div>
+
+    <div class="coach-card__extra">
+      <div class="coach-info-row">
+        <span class="coach-label">ID:</span>
+        <span id="coachIdValue">—</span>
+      </div>
+
+      <div class="coach-info-row">
+        <span class="coach-label">Фамилия:</span>
+        <span id="coachLastNameValue">—</span>
+      </div>
+
+      <div class="coach-info-row">
+        <span class="coach-label">Email:</span>
+        <span id="coachEmailValue">—</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="coach-right coach-right--dashboard">
+    <div class="coach-right-header">
+      <h2 class="coach-welcome">
+        <span>Добро пожаловать</span>, <span id="coachFullName">—</span>
+      </h2>
+
+      <button id="openChatFromCoach" class="btn-primary">
+        💬 <span>Чат</span>
+      </button>
+    </div>
+
+    <section class="coach-menu">
+      <a href="coach_athletes.html" class="coach-menu__item">
+        <div class="coach-menu__icon">👟</div>
+        <div class="coach-menu__text">
+          <div class="coach-menu__title">Спортсмены</div>
+          <div class="coach-menu__sub">Управление</div>
+        </div>
+      </a>
+
+      <a href="coach_tasks.html" class="coach-menu__item">
+        <div class="coach-menu__icon">📝</div>
+        <div class="coach-menu__text">
+          <div class="coach-menu__title">Задачи</div>
+          <div class="coach-menu__sub">Выдача заданий</div>
+        </div>
+      </a>
+
+      <a href="coach_plans.html" class="coach-menu__item">
+        <div class="coach-menu__icon">📅</div>
+        <div class="coach-menu__text">
+          <div class="coach-menu__title">Планы</div>
+          <div class="coach-menu__sub">Тренировки</div>
+        </div>
+      </a>
+
+      <a href="coach_notifications.html" class="coach-menu__item">
+        <div class="coach-menu__icon">🔔</div>
+        <div class="coach-menu__text">
+          <div class="coach-menu__title">Уведомления</div>
+          <div class="coach-menu__sub">Статусы</div>
+        </div>
+      </a>
+    </section>
+  </section>
+
+  <section class="coach-summary coach-summary--dashboard">
+    <div class="coach-summary__item">
+      <span id="cntAthletes">0</span>
+      <span>Спортсменов</span>
+    </div>
+    <div class="coach-summary__item">
+      <span id="cntPlans">0</span>
+      <span>Планов</span>
+    </div>
+    <div class="coach-summary__item">
+      <span id="cntTasks">0</span>
+      <span>Активных задач</span>
+    </div>
+  </section>
+
+  <section class="panel activity-panel activity-panel--dashboard">
+    <div class="panel-header">
+      <h2 class="page-subtitle">Последняя активность</h2>
+    </div>
+    <div id="coachActivity" class="list muted">Загрузка...</div>
+  </section>
+
+</main>
+
+<script>
+  const API = "";
+
+  const raw = localStorage.getItem("user");
+  if (!raw) location.href = "login.html";
+  const me = JSON.parse(raw);
+
+  if ((me.role || "").toLowerCase() !== "coach") location.href = "login.html";
+
+  const elName = document.getElementById("coachName");
+  const elFull = document.getElementById("coachFullName");
+  const elId = document.getElementById("coachIdValue");
+  const elLast = document.getElementById("coachLastNameValue");
+  const elEmail = document.getElementById("coachEmailValue");
+  const elAvatar = document.getElementById("coachAvatarLetter");
+
+  function esc(s){
+    return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  }
+  function fmtDate(d){
+    try { return new Date(d).toLocaleString(); } catch { return ""; }
+  }
+
+  async function loadProfile() {
+    const username = me.username || "";
+    const last_name = me.last_name || "";
+    const email = me.email || "";
+    const id = me.id ?? "";
+
+    elName.textContent = username || "—";
+    elFull.textContent = (username && last_name) ? `${username} ${last_name}` : (username || "—");
+    elId.textContent = (id !== "" ? String(id) : "—");
+    elLast.textContent = last_name || "—";
+    elEmail.textContent = email || "—";
+
+    const first = (username || "").trim()[0];
+    elAvatar.textContent = first ? first.toUpperCase() : "C";
+
+
+    try {
+      if (me.id == null) return;
+      const res = await fetch(`${API}/api/users/${encodeURIComponent(me.id)}`, { headers: { "Accept": "application/json" }});
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) return;
+
+      elName.textContent = data.username || elName.textContent;
+      elFull.textContent = (data.username && data.last_name) ? `${data.username} ${data.last_name}` : (data.username || elFull.textContent);
+      elId.textContent = (data.id != null ? String(data.id) : elId.textContent);
+      elLast.textContent = data.last_name || elLast.textContent;
+      elEmail.textContent = data.email || elEmail.textContent;
+
+      const f = (data.username || "").trim()[0];
+      elAvatar.textContent = f ? f.toUpperCase() : elAvatar.textContent;
+
+      const merged = { ...me, ...data };
+      localStorage.setItem("user", JSON.stringify(merged));
+    } catch (e) {
+      console.error("loadProfile error:", e);
+    }
+  }
+
+  async function loadCounters() {
+    try {
+      const r = await fetch(`${API}/api/coach/athletes?coach_id=${encodeURIComponent(me.id)}&status=accepted`);
+      const d = await r.json().catch(() => []);
+      if (r.ok && Array.isArray(d)) {
+        document.getElementById("cntAthletes").textContent = String(d.length);
+      }
+    } catch {}
+
+    try {
+      const r = await fetch(`${API}/api/coach/plans?coach_id=${encodeURIComponent(me.id)}`);
+      const d = await r.json().catch(() => []);
+      if (r.ok && Array.isArray(d)) {
+        document.getElementById("cntPlans").textContent = String(d.length);
+      }
+    } catch {}
+
+    try {
+      const r = await fetch(`${API}/api/coach/tasks?coach_id=${encodeURIComponent(me.id)}`);
+      const d = await r.json().catch(() => []);
+      if (r.ok && Array.isArray(d)) {
+        const active = d.filter(t => !["done","rated"].includes(String(t.status || "").toLowerCase()));
+        document.getElementById("cntTasks").textContent = String(active.length);
+      }
+    } catch {}
+  }
+
+  async function loadCoachActivity() {
+    const el = document.getElementById("coachActivity");
+    el.innerHTML = `<div class="muted">Загрузка...</div>`;
+
+    try {
+      const res = await fetch(`${API}/api/activity?user_id=${encodeURIComponent(me.id)}&limit=8`);
+      const data = await res.json().catch(() => []);
+      if (!res.ok || !Array.isArray(data) || data.length === 0) {
+        el.innerHTML = `<div class="muted">Пока активности нет</div>`;
+        return;
+      }
+
+      el.innerHTML = data.map(a => `
+        <div class="list-item">
+          <div>
+            <div class="list-title">${esc(a.title || "Событие")}</div>
+            <div class="list-sub">${esc(a.message || "")}</div>
+          </div>
+          <span class="badge">${a.created_at ? fmtDate(a.created_at) : ""}</span>
+        </div>
+      `).join("");
+    } catch (e) {
+      console.error(e);
+      el.innerHTML = `<div class="muted">Нет связи с сервером</div>`;
+    }
+  }
+
+  document.getElementById("editProfileBtn").onclick = () => location.href = "profile_edit.html";
+  document.getElementById("openChatFromCoach").onclick = () => location.href = "chat.html";
+
+  loadProfile();
+  loadCounters();
+  loadCoachActivity();
+</script>
+
+</body>
+</html>
+
